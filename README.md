@@ -1,8 +1,8 @@
 # agentmemory
 
-<img src="resources/image.jpg">
+Dead simple memory for agents, built on chromadb
 
-Dead simple agent memory, built on chromadb
+<img src="resources/image.jpg">
 
 # Installation
 
