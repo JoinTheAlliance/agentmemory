@@ -100,6 +100,11 @@ def create_memory(category, text, metadata=None):
         metadatas=[metadata],
     )
 
+def get_memory(category, id):
+    memories = client.get_or_create_collection(category)
+    memory = memories.get(ids=[str(id)], limit=1, include=["metadatas", "documents", "embeddings"])
+    memory = collection_to_list(memory)
+    return memory[0]
 
 def get_memories(category, sort_order="desc", filter_metadata=None, n_results=20):
     # desc -> descending order, last to first
@@ -115,4 +120,38 @@ def get_memories(category, sort_order="desc", filter_metadata=None, n_results=20
     memories = memories[:n_results]
     return memories
 
+def update_memory(category, id, text=None, metadata=None):
+    memories = client.get_or_create_collection(category)
+    # if the metadata hasn't changed, just update the text
+    metadatas = None
 
+    if metadata is None and text is None:
+        raise Exception("No text or metadata provided")
+
+    if metadata is not None:
+        metadatas = [metadata]
+    
+    if text is not None:
+        documents = [text]
+    
+    memories.update(
+        ids=[str(id)],
+        documents=documents,
+        metadatas=metadatas,
+    )
+
+def delete_memory(category, id):
+    memories = client.get_or_create_collection(category)
+    memories.delete(ids=[str(id)])
+
+# wipe category
+def wipe_category(category):
+    client.delete_collection(category)
+
+def count_memories(category):
+    memories = client.get_or_create_collection(category)
+    return memories.count()
+
+# wipe all
+def wipe_all_memories():
+    client.reset()
