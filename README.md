@@ -1,5 +1,7 @@
 # agentmemory
 
+<img src="resources/image.png">
+
 Dead simple agent memory, built on chromadb
 
 # Installation
@@ -51,7 +53,7 @@ memories = get_memories("conversation") # can be any category
 ]
 ```
 
-# Search memories
+## Search memories
 
 ```python
 memories = search_memory("conversation", "Dave") # category, search term
