@@ -110,6 +110,16 @@ wipe_category("conversation") # category
 wipe_all_memories()
 ```
 
+# Publishing
+
+```bash
+bash publish.sh --version=<version> --username=<pypi_username> --password=<pypi_password>
+git add agentmemory/__init.py__
+git add setup.py
+git commit -m "Updated to <version> and published"
+git push origin/main
+```
+
 # Contributions Welcome
 
 If you like this library and want to contribute in any way, please feel free to submit a PR and I will review it. Please note that the goal here is simplicity and accesibility, using common language and few dependencies.
