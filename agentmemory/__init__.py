@@ -1,7 +1,7 @@
 """
 agentmemory
 
-Dead simple agent memory, powered by chromadb
+Simple agent memory, powered by chromadb
 """
 
 __version__ = "0.1.0"
