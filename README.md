@@ -1,6 +1,6 @@
 # agentmemory
 
-<img src="resources/image.png">
+<img src="resources/image.jpg">
 
 Dead simple agent memory, built on chromadb
 
