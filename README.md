@@ -15,7 +15,7 @@ pip install agentmemory
 ## Importing into your project
 
 ```python
-from agentmemory.memory import (
+from agentmemory import (
     create_memory,
     get_memories,
     search_memory,
