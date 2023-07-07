@@ -45,5 +45,10 @@ pip install --index-url https://test.pypi.org/simple/ agentmemory --user || { ec
 twine upload dist/* || { echo "Final upload failed"; exit 1; }
 pip install agentmemory --user || { echo "Installation of agentmemory failed"; exit 1; }
 
+git add agentmemory/__init.py__
+git add setup.py
+git commit -m "Updated to ${VERSION} and published"
+git push origin/main
+
 # Let the user know that everything completed successfully
 echo "Script completed successfully"

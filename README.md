@@ -114,10 +114,6 @@ wipe_all_memories()
 
 ```bash
 bash publish.sh --version=<version> --username=<pypi_username> --password=<pypi_password>
-git add agentmemory/__init.py__
-git add setup.py
-git commit -m "Updated to <version> and published"
-git push origin/main
 ```
 
 # Contributions Welcome
