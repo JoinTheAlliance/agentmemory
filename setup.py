@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='agentmemory',
-    version='0.1.4',
+    version='0.1.5',
     description='Easy-to-use agent memory, powered by chromadb',
     url='https://github.com/lalalune/agentmemory',
     author='Moon',
