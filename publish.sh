@@ -12,18 +12,9 @@ sed -i.bak "s/version=.*/version='${VERSION}',/" setup.py
 # remove setup.py.bak
 rm "setup.py.bak"
 
-# Write the following text out to agentmemory/__init__.py to replace the current (without the comments)
-cat << EOF > agentmemory/__init__.py
-"""
-agentmemory
-
-Simple agent memory, powered by chromadb
-"""
-
-__version__ = "${VERSION}"
-__author__ = 'Moon (https://github.com/lalalune)'
-__credits__ = 'https://github.com/lalalune/agentmemory and https://www.trychroma.com/'
-EOF
+# Read agentmemory/__init__.py, find the line that starts with __version__ and replace with '__version__ = "${VERSION}"'
+sed -i.bak "s/__version__.*/__version__ = \"${VERSION}\"/" agentmemory/__init__.py
+rm agentmemory/__init__.py.bak
 
 # Check if these dependencies are installed, and install them if they aren't
 pip install twine || echo "Failed to install twine"
