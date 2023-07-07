@@ -1,9 +1,14 @@
 from setuptools import setup
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+    long_description=long_description,  # added this line
+    long_description_content_type="text/markdown",  # and this line
+
 setup(
     name='agentmemory',
     version='0.1.4',
-    description='Dead simple agent memory, powered by chromadb',
+    description='Easy-to-use agent memory, powered by chromadb',
     url='https://github.com/lalalune/agentmemory',
     author='Moon',
     author_email='shawmakesmagic@gmail.com',

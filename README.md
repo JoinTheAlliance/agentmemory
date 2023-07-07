@@ -1,6 +1,6 @@
 # agentmemory
 
-Dead simple memory for agents, built on chromadb
+Easy-to-use agent memory, powered by chromadb
 
 <img src="resources/image.jpg">
 
