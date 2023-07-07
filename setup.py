@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='agentmemory',
-    version='0.1.3',
+    version='0.1.4',
     description='Dead simple agent memory, powered by chromadb',
     url='https://github.com/lalalune/agentmemory',
     author='Moon',
