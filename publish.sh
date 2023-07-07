@@ -6,12 +6,11 @@ VERSION=${1/--version=/}
 export TWINE_USERNAME=${2/--username=/}
 export TWINE_PASSWORD=${3/--password=/}
 
-# echo username and password
-echo "${2/--username=/}"
-echo "${3/--password=/}"
-
 # in setup.py, replace the line '\tversion=...' with '\tversion={VERSION}'
 sed -i.bak "s/version=.*/version='${VERSION}',/" setup.py
+
+# remove setup.py.bak
+rm "setup.py.bak"
 
 # Write the following text out to agentmemory/__init__.py to replace the current (without the comments)
 cat << EOF > agentmemory/__init__.py
@@ -42,13 +41,13 @@ twine upload dist/agentmemory-${VERSION}.tar.gz --repository-url https://test.py
 pip install --index-url https://test.pypi.org/simple/ agentmemory --user || { echo "Installation from test repo failed"; exit 1; }
 
 # Final upload
-twine upload dist/* || { echo "Final upload failed"; exit 1; }
+twine upload dist/agentmemory-${VERSION}.tar.gz || { echo "Final upload failed"; exit 1; }
 pip install agentmemory --user || { echo "Installation of agentmemory failed"; exit 1; }
 
-git add agentmemory/__init.py__
+git add agentmemory/__init__.py
 git add setup.py
 git commit -m "Updated to ${VERSION} and published"
-git push origin/main
+git push origin main
 
 # Let the user know that everything completed successfully
 echo "Script completed successfully"
