@@ -18,6 +18,8 @@ from .main import (
     count_memories,
     wipe_category,
     wipe_all_memories,
+    set_storage_path,
+    save_memory
 )
 
 __all__ = [
@@ -30,4 +32,6 @@ __all__ = [
     "count_memories",
     "wipe_category",
     "wipe_all_memories",
+    "set_storage_path",
+    "save_memory"
 ]

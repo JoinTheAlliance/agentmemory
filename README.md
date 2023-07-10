@@ -13,7 +13,9 @@ pip install agentmemory
 # Quickstart
 
 ```python
-from agentmemory import create_memory, search_memory
+from agentmemory import create_memory, search_memory, set_storage_path
+
+set_storage_path('./memory')
 
 # create a memory
 create_memory("conversation", "I can't do that, Dave.", metadata={"speaker": "HAL", "some_other_key": "some value, could be a number or string"})
@@ -120,12 +122,12 @@ delete_memory("conversation", 1)
 
 ## Create a Memory
 
-#### `create_memory(category, text, id=None, metadata=None)`
+#### `create_memory(category, text, id=None, metadata=None, persist=True)`
 
 Create a new memory in a collection.
 
 ```python
->>> create_memory('sample_category', 'sample_text', id='sample_id', metadata={'sample_key': 'sample_value'})
+>>> create_memory(category='sample_category', text='sample_text', id='sample_id', metadata={'sample_key': 'sample_value'}, persist=True)
 ```
 
 ## Search Memory
@@ -161,13 +163,13 @@ Retrieve a list of memories from a given category, sorted by ID, with optional f
 
 ## Update a Memory
 
-#### `update_memory(category, id, text=None, metadata=None)`
+#### `update_memory(category, id, text=None, metadata=None, persist=True)`
 
 Update a specific memory with new text and/or metadata.
 
 ```python
 # with keyword arguments
-update_memory("conversation", 1, text="Okay, I will open the podbay doors.", metadata={ "speaker": "HAL", "sentiment": "positive" })
+update_memory(category="conversation", id=1, text="Okay, I will open the podbay doors.", metadata={ "speaker": "HAL", "sentiment": "positive" }, persist=True)
 
 # with positional arguments
 update_memory("conversation", 1, "Okay, I will open the podbay doors.")
@@ -175,7 +177,7 @@ update_memory("conversation", 1, "Okay, I will open the podbay doors.")
 
 ## Delete a Memory
 
-#### `delete_memory(category, id, contains_metadata=None, contains_text=None)`
+#### `delete_memory(category, id, contains_metadata=None, contains_text=None, persist=True)`
 
 Delete a specific memory based on its ID and optionally on matching metadata and/or text.
 
@@ -195,7 +197,7 @@ Check if a memory with a specific ID exists in a given category.
 
 ## Wipe an Entire Category of Memories
 
-#### `wipe_category(category)`
+#### `wipe_category(category, persist=True)`
 
 Delete an entire category of memories.
 
@@ -215,12 +217,28 @@ Count the number of memories in a given category.
 
 ## Wipe All Memories
 
-#### `wipe_all_memories()`
+#### `wipe_all_memories(persist=True)`
 
 Delete all memories across all categories.
 
 ```python
 >>> wipe_all_memories()
+```
+
+## Set a Persistent Storage Path
+
+#### `set_storage_path(path)`
+
+```python
+    >>> set_storage_path("path/to/persistent/directory")
+```
+
+## Save All Memory to Disk
+
+#### `save_memory()`
+
+```python
+    >>> save_memory()
 ```
 
 # Publishing

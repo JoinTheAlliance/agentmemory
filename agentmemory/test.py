@@ -1,6 +1,7 @@
 from main import (
     search_memory,
     get_memory,
+    get_client,
     create_memory,
     get_memories,
     update_memory,
@@ -8,11 +9,17 @@ from main import (
     count_memories,
     wipe_category,
     wipe_all_memories,
+    set_storage_path
+)
+
+from utils import (
     collection_to_list,
     list_to_collection,
 )
 
 wipe_all_memories()
+
+set_storage_path("./test")
 
 # create_memory tests
 create_memory("test", "document 1", metadata={"test": "test"})
@@ -32,7 +39,7 @@ assert memory[0]["document"] == "document 5"
 print("Passed create_memory tests")
 
 # collection_to_list
-collection = client.get_or_create_collection("test")
+collection = get_client().get_or_create_collection("test")
 test_collection_data = collection.peek()
 list = collection_to_list(test_collection_data)
 
