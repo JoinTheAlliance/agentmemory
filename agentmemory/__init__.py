@@ -8,7 +8,7 @@ __version__ = "0.1.8"
 __author__ = "Moon (https://github.com/lalalune)"
 __credits__ = "https://github.com/lalalune/agentmemory and https://www.trychroma.com/"
 
-from .memory import (
+from .main import (
     create_memory,
     get_memories,
     search_memory,

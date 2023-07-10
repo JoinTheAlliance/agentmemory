@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 agentmemory/memory_test.py
+python3 agentmemory/test.py
