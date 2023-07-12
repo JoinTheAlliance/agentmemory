@@ -18,6 +18,8 @@ wipe_all_memories()
 
 set_storage_path("./test")
 
+wipe_category("test")
+
 # create_memory tests
 create_memory("test", "document 1", metadata={"test": "test"})
 create_memory("test", "document 2", metadata={"test": "test"})
@@ -27,6 +29,8 @@ create_memory("test", "document 5", metadata={"test": "test"})
 
 assert get_memory("test", 0)["document"] == "document 1"
 
+print('count_memories("test")')
+print(count_memories("test"))
 num_memories = count_memories("test")
 assert num_memories == 5
 print("Passed count_memories tests")
@@ -73,7 +77,17 @@ print("Passed wipe_category tests")
 create_memory("test", "document 1", metadata={"test": "test"})
 create_memory("test", "document 2", metadata={"test": "test"})
 create_memory("test", "document 3", metadata={"test": "test"})
-count_memories("test")
+
+assert count_memories("test") == 3
+
+min_dist_limited_memories = search_memory("test", "document", min_distance=0.8)
+
+assert len(min_dist_limited_memories) == 0
+
+create_memory("test", "cinammon duck cakes")
+max_dist_limited_memories = search_memory("test", "cinammon duck cakes", max_distance=0.1)
+
+assert len(max_dist_limited_memories) == 1
 
 update_memory("test", 0, "document 1 updated", metadata={"test": "test"})
 assert get_memory("test", 0)["document"] == "document 1 updated"

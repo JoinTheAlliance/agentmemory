@@ -1,11 +1,14 @@
+import json
+import os
 import datetime
+
 import chromadb
 
 persistent_path = None
 client = None
 
 
-def create_memory(category, text, metadata=None, id=None, persist=True):
+def create_memory(category, text, metadata={}, id=None, persist=True):
     """
     Create a new memory in a collection.
 
@@ -44,7 +47,9 @@ def create_memory(category, text, metadata=None, id=None, persist=True):
     )
 
     if persist:
-        client.persist()
+        persist_memory()
+
+    debug_log(f"Created memory {id}: {text}", metadata)
 
 
 def search_memory(
@@ -115,6 +120,8 @@ def search_memory(
     if max_distance is not None and max_distance < 1.0:
         result_list = [res for res in result_list if res["distance"] <= max_distance]
 
+    debug_log(f"Searched memory: {search_text}", result_list)
+
     return result_list
 
 
@@ -146,6 +153,8 @@ def get_memory(category, id, include_embeddings=True):
 
     # Convert the collection to list format
     memory = chroma_collection_to_list(memory)
+
+    debug_log(f"Got memory {id} from category {category}", memory)
 
     # Return the first (and only) memory in the list
     return memory[0]
@@ -202,6 +211,8 @@ def get_memories(
     # Only keep the top n_results memories
     memories = memories[:n_results]
 
+    debug_log(f"Got memories from category {category}", memories)
+
     return memories
 
 
@@ -244,7 +255,12 @@ def update_memory(category, id, text=None, metadata=None, persist=True):
     memories.update(ids=[str(id)], documents=documents, metadatas=metadatas)
 
     if persist:
-        client.persist()
+        persist_memory()
+
+    debug_log(
+        f"Updated memory {id} in category {category}",
+        {"documents": documents, "metadatas": metadatas},
+    )
 
 
 def delete_memory(category, id, persist=True):
@@ -272,7 +288,9 @@ def delete_memory(category, id, persist=True):
     memories.delete(ids=[str(id)])
 
     if persist:
-        client.persist()
+        persist_memory()
+
+    debug_log(f"Deleted memory {id} in category {category}")
 
 
 def memory_exists(category, id, includes_metadata=None):
@@ -299,8 +317,14 @@ def memory_exists(category, id, includes_metadata=None):
     # Check if there's a memory with the given ID and metadata
     memory = memories.get(ids=[str(id)], where=includes_metadata, limit=1)
 
+    exists = len(memory["ids"]) > 0
+
+    debug_log(
+        f"Checking if memory {id} exists in category {category}. Exists: {exists}"
+    )
+
     # Return True if at least one memory was found, False otherwise
-    return len(memory["ids"]) > 0
+    return exists
 
 
 def wipe_category(category, persist=True):
@@ -321,7 +345,9 @@ def wipe_category(category, persist=True):
     client.delete_collection(category)
 
     if persist:
-        client.persist()
+        persist_memory()
+
+    debug_log(f"Wiped category {category}")
 
 
 def count_memories(category):
@@ -342,6 +368,8 @@ def count_memories(category):
 
     # Get or create the collection for the given category
     memories = client.get_or_create_collection(category)
+
+    debug_log(f"Counted memories in {category}: {memories.count()}")
 
     # Return the count of memories
     return memories.count()
@@ -364,7 +392,9 @@ def wipe_all_memories(persist=True):
     client.reset()
 
     if persist:
-        client.persist()
+        persist_memory()
+
+    debug_log(f"Wiped all memories")
 
 
 def check_client_initialized():
@@ -389,6 +419,8 @@ def check_client_initialized():
                 )
             )
 
+    debug_log(f"Checking if client is initialized")
+
 
 def set_storage_path(path):
     """
@@ -404,12 +436,14 @@ def set_storage_path(path):
     global client
     persistent_path = path
     if client is not None:
-        client.persist()
+        persist_memory()
     client = chromadb.Client(
         chromadb.Settings(
             chroma_db_impl="duckdb+parquet", persist_directory=persistent_path
         )
     )
+
+    debug_log(f"Set storage path to {path}")
 
 
 def save_memory():
@@ -420,10 +454,26 @@ def save_memory():
         >>> save_to_disk()
     """
     check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-    client.persist()
+    persist_memory()
+
+    debug_log(f"Saved memory")
 
 
 ### LOW LEVEL FUNCTIONS ###
+
+
+def debug_log(message, dict=None):
+    # Check if the DEBUG_MEMORY environment variable is set to 'true'
+    if os.getenv("DEBUG_MEMORY", "false").lower() == "true":
+        if dict is not None:
+            message = message + f" ({json.dumps(dict)})"
+        print(message)
+
+
+def persist_memory():
+    if persistent_path is not None:
+        client.persist()
+        debug_log(f"Persisted memory")
 
 
 def get_chroma_client():
@@ -439,6 +489,7 @@ def get_chroma_client():
     """
     global client
     check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
+    debug_log(f"Getting chroma client")
     return client
 
 
@@ -507,7 +558,7 @@ def chroma_collection_to_list(collection):
                 "id": id,
             }
         )
-
+    debug_log(f"Collection to list", {"collection": collection, "list": list})
     return list
 
 
@@ -553,6 +604,7 @@ def list_to_chroma_collection(list):
     if len(collection["distances"]) == 0:
         del collection["distances"]
 
+    debug_log(f"List to collection", {"collection": collection, "list": list})
     return collection
 
 
@@ -608,4 +660,5 @@ def get_include_types(include_embeddings, include_distances):
     if include_distances:
         include_types.append("distances")
 
+    debug_log(f"Get include types", {"include_types": include_types})
     return include_types

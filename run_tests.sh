@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 agentmemory/test.py
+DEBUG_MEMORY=true python3 test.py
