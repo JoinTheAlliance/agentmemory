@@ -126,18 +126,62 @@ delete_memory("conversation", 1)
 
 Create a new memory in a collection.
 
+##### Arguments
+
+```
+# Required
+category (str): Category of the collection.
+text (str): Document text.
+
+# Optional
+id (str): Unique id. Generated incrementally unless set.
+metadata (dict): Metadata.
+persist (bool): Whether to persist the changes to disk. Defaults to True.
+```
+
+##### Example
+
 ```python
 >>> create_memory(category='sample_category', text='sample_text', id='sample_id', metadata={'sample_key': 'sample_value'}, persist=True)
 ```
 
 ## Search Memory
 
-#### `search_memory(category, search_text, n_results=5, filter_metadata=None, contains_text=None, include_embeddings=True)`
+#### `search_memory(category, search_text, n_results=5, min_distance=None, max_distance=None, filter_metadata=None, contains_text=None, include_embeddings=True)`
 
 Search a collection with given query texts.
 
+A note about distances: the filters are applied after the query, so the n_results may be dramatically shortened. This is a current limitation of Chromadb.
+
+##### Arguments
+
+```
+# Required
+category (str): Category of the collection.
+search_text (str): Text to be searched.
+
+# Optional
+n_results (int): Number of results to be returned.
+filter_metadata (dict): Metadata for filtering the results.
+contains_text (str): Text that must be contained in the documents.
+include_embeddings (bool): Whether to include embeddings in the results.
+include_distances (bool): Whether to include distances in the results.
+max_distance (float): Only include memories with this distance threshold maximum.
+    0.1 = most memories will be exluded, 1.0 = no memories will be excluded
+min_distance (float): Only include memories that are at least this distance
+    0.0 = No memories will be excluded, 0.9 = most memories will be excluded
+```
+
+##### Returns
+
+```
+list: List of search results.
+```
+
+##### Example
+
 ```python
->>> search_memory('sample_category', 'search_text', n_results=2, filter_metadata={'sample_key': 'sample_value'}, contains_text='sample', include_embeddings=True, include_distances=True)
+>>> search_memory('sample_category', 'search_text', min_distance=0.01, max_distance=0.7, n_results=2, filter_metadata={'sample_key': 'sample_value'}, contains_text='sample', include_embeddings=True, include_distances=True)
 [{'metadata': '...', 'document': '...', 'id': '...'}, {'metadata': '...', 'document': '...', 'id': '...'}]
 ```
 
@@ -146,6 +190,25 @@ Search a collection with given query texts.
 #### `get_memory(category, id, include_embeddings=True)`
 
 Retrieve a specific memory from a given category based on its ID.
+
+##### Arguments
+
+```
+# Required
+category (str): The category of the memory.
+id (str/int): The ID of the memory.
+
+#optional
+include_embeddings (bool): Whether to include the embeddings. Defaults to True.
+```
+
+##### Returns
+
+```
+dict: The retrieved memory.
+```
+
+##### Example
 
 ```python
 >>> get_memory("books", "1")
@@ -157,6 +220,27 @@ Retrieve a specific memory from a given category based on its ID.
 
 Retrieve a list of memories from a given category, sorted by ID, with optional filtering. `sort_order` controls whether you get from the beginning or end of the list.
 
+###### Arguments
+
+```
+# Required
+category (str): The category of the memories.
+
+# Optional
+sort_order (str): The sorting order of the memories. Can be 'asc' or 'desc'. Defaults to 'desc'.
+filter_metadata (dict): Filter to apply on metadata. Defaults to None.
+n_results (int): The number of results to return. Defaults to 20.
+include_embeddings (bool): Whether to include the embeddings. Defaults to True.
+```
+
+##### Returns
+
+```
+list: List of retrieved memories.
+```
+
+##### Example
+
 ```python
 >>> get_memories("books", sort_order="asc", n_results=10)
 ```
@@ -165,7 +249,22 @@ Retrieve a list of memories from a given category, sorted by ID, with optional f
 
 #### `update_memory(category, id, text=None, metadata=None, persist=True)`
 
-Update a specific memory with new text and/or metadata.
+Update a memory with new text and/or metadata.
+
+##### Arguments
+
+```
+# Required
+category (str): The category of the memory.
+id (str/int): The ID of the memory.
+
+# Optional
+text (str): The new text of the memory. Defaults to None.
+metadata (dict): The new metadata of the memory. Defaults to None.
+persist (bool): Whether to persist the changes to disk. Defaults to True.
+```
+
+##### Example
 
 ```python
 # with keyword arguments
@@ -179,7 +278,20 @@ update_memory("conversation", 1, "Okay, I will open the podbay doors.")
 
 #### `delete_memory(category, id, contains_metadata=None, contains_text=None, persist=True)`
 
-Delete a specific memory based on its ID and optionally on matching metadata and/or text.
+Delete a memory by ID.
+
+##### Arguments
+
+```
+# Required
+category (str): The category of the memory.
+id (str/int): The ID of the memory.
+
+# Optional
+persist (bool): Whether to persist the changes to disk. Defaults to True.
+```
+
+##### Example
 
 ```python
 >>> delete_memory("books", "1")
@@ -189,7 +301,20 @@ Delete a specific memory based on its ID and optionally on matching metadata and
 
 #### `memory_exists(category, id, includes_metadata=None)`
 
-Check if a memory with a specific ID exists in a given category.
+Check if a memory exists in a given category.
+
+##### Arguments
+
+```
+# Required
+category (str): The category of the memory.
+id (str/int): The ID of the memory.
+
+# Optional
+includes_metadata (dict): Metadata that the memory should include. Defaults to None.
+```
+
+##### Example
 
 ```python
 >>> memory_exists("books", "1")
@@ -201,6 +326,18 @@ Check if a memory with a specific ID exists in a given category.
 
 Delete an entire category of memories.
 
+##### Arguments
+
+```
+# Required
+category (str): The category to delete.
+
+# Optional
+persist (bool): Whether to persist the changes to disk. Defaults to True.
+```
+
+##### Example
+
 ```python
 >>> wipe_category("books")
 ```
@@ -210,6 +347,20 @@ Delete an entire category of memories.
 #### `count_memories(category)`
 
 Count the number of memories in a given category.
+
+##### Arguments
+
+```
+category (str): The category of the memories.
+```
+
+##### Returns
+
+```
+int: The number of memories.
+```
+
+##### Example
 
 ```python
 >>> count_memories("books")
@@ -221,6 +372,15 @@ Count the number of memories in a given category.
 
 Delete all memories across all categories.
 
+##### Arguments
+
+```
+# Optional
+persist (bool): Whether to persist the changes to disk. Defaults to True.
+```
+
+##### Example
+
 ```python
 >>> wipe_all_memories()
 ```
@@ -229,6 +389,14 @@ Delete all memories across all categories.
 
 #### `set_storage_path(path)`
 
+##### Arguments
+
+```
+path (string): the path to save to
+```
+
+##### Example
+
 ```python
     >>> set_storage_path("path/to/persistent/directory")
 ```
@@ -236,6 +404,8 @@ Delete all memories across all categories.
 ## Save All Memory to Disk
 
 #### `save_memory()`
+
+##### Example
 
 ```python
     >>> save_memory()
@@ -251,6 +421,4 @@ bash publish.sh --version=<version> --username=<pypi_username> --password=<pypi_
 
 If you like this library and want to contribute in any way, please feel free to submit a PR and I will review it. Please note that the goal here is simplicity and accesibility, using common language and few dependencies.
 
-# Questions, Comments, Concerns
-
-If you have any questions, please feel free to reach out to me on [Twitter](https://twitter.com/spatialweeb) or [Discord](@new.moon).
+<img src="resources/youcreatethefuture.jpg">

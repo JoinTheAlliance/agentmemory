@@ -4,11 +4,12 @@ import chromadb
 persistent_path = None
 client = None
 
+
 def create_memory(category, text, metadata=None, id=None, persist=True):
     """
-    Function to create a new memory in a collection.
+    Create a new memory in a collection.
 
-    Parameters:
+    Arguments:
     category (str): Category of the collection.
     text (str): Document text.
     id (str): Unique id.
@@ -58,9 +59,9 @@ def search_memory(
     min_distance=None,  # 0.0 - 1.0
 ):
     """
-    Function to search a collection with given query texts.
+    Cearch a collection with given query texts.
 
-    Parameters:
+    Arguments:
     category (str): Category of the collection.
     search_text (str): Text to be searched.
     n_results (int): Number of results to be returned.
@@ -121,7 +122,7 @@ def get_memory(category, id, include_embeddings=True):
     """
     Retrieve a specific memory from a given category based on its ID.
 
-    Args:
+    Arguments:
         category (str): The category of the memory.
         id (str/int): The ID of the memory.
         include_embeddings (bool, optional): Whether to include the embeddings. Defaults to True.
@@ -161,7 +162,7 @@ def get_memories(
     """
     Retrieve a list of memories from a given category, sorted by ID, with optional filtering.
 
-    Args:
+    Arguments:
         category (str): The category of the memories.
         sort_order (str, optional): The sorting order of the memories. Can be 'asc' or 'desc'. Defaults to 'desc'.
         filter_metadata (dict, optional): Filter to apply on metadata. Defaults to None.
@@ -206,14 +207,17 @@ def get_memories(
 
 def update_memory(category, id, text=None, metadata=None, persist=True):
     """
-    Update a specific memory with new text and/or metadata.
+    Update a memory with new text and/or metadata.
 
-    Args:
+    Arguments:
         category (str): The category of the memory.
         id (str/int): The ID of the memory.
         text (str, optional): The new text of the memory. Defaults to None.
         metadata (dict, optional): The new metadata of the memory. Defaults to None.
         persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
+
+    Returns:
+        None
 
     Raises:
         Exception: If neither text nor metadata is provided.
@@ -243,18 +247,17 @@ def update_memory(category, id, text=None, metadata=None, persist=True):
         client.persist()
 
 
-def delete_memory(
-    category, id, contains_metadata=None, contains_text=None, persist=True
-):
+def delete_memory(category, id, persist=True):
     """
-    Delete a specific memory based on its ID and optionally on matching metadata and/or text.
+    Delete a memory by ID.
 
-    Args:
+    Arguments:
         category (str): The category of the memory.
         id (str/int): The ID of the memory.
-        contains_metadata (dict, optional): Metadata that the memory should contain. Defaults to None.
-        contains_text (str, optional): Text that the memory should contain. Defaults to None.
         persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
+
+    Returns:
+        None
 
     Example:
         >>> delete_memory("books", "1")
@@ -265,14 +268,8 @@ def delete_memory(
     # Get or create the collection for the given category
     memories = client.get_or_create_collection(category)
 
-    # If contains_text is provided, convert it to a $contains query
-    if contains_text is not None:
-        contains_text = {"$contains": contains_text}
-
     # Delete the memory
-    memories.delete(
-        ids=[str(id)], where=contains_metadata, where_document=contains_text
-    )
+    memories.delete(ids=[str(id)])
 
     if persist:
         client.persist()
@@ -282,7 +279,7 @@ def memory_exists(category, id, includes_metadata=None):
     """
     Check if a memory with a specific ID exists in a given category.
 
-    Args:
+    Arguments:
         category (str): The category of the memory.
         id (str/int): The ID of the memory.
         includes_metadata (dict, optional): Metadata that the memory should include. Defaults to None.
@@ -310,7 +307,7 @@ def wipe_category(category, persist=True):
     """
     Delete an entire category of memories.
 
-    Args:
+    Arguments:
         category (str): The category to delete.
         persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
 
@@ -331,7 +328,7 @@ def count_memories(category):
     """
     Count the number of memories in a given category.
 
-    Args:
+    Arguments:
         category (str): The category of the memories.
 
     Returns:
@@ -354,7 +351,7 @@ def wipe_all_memories(persist=True):
     """
     Delete all memories across all categories.
 
-    Args:
+    Arguments:
         persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
 
     Example:
@@ -396,6 +393,9 @@ def check_client_initialized():
 def set_storage_path(path):
     """
     Set the path to persist the database to.
+
+    Arguments:
+        path (string): the path to save to
 
     Example:
         >>> set_storage_path("path/to/persistent/directory")
@@ -446,7 +446,7 @@ def chroma_collection_to_list(collection):
     """
     Function to convert collection (dictionary) to list.
 
-    Parameters:
+    Arguments:
     collection (dict): Dictionary to be converted.
 
     Returns:
@@ -515,7 +515,7 @@ def list_to_chroma_collection(list):
     """
     Function to convert list (of dictionaries) to collection (dictionary).
 
-    Parameters:
+    Arguments:
     list (list): List to be converted.
 
     Returns:
@@ -560,7 +560,7 @@ def flatten_arrays(collection):
     """
     Function to flatten the arrays in the collection.
 
-    Parameters:
+    Arguments:
     collection (dict): Dictionary with nested arrays.
 
     Returns:
@@ -586,7 +586,7 @@ def get_include_types(include_embeddings, include_distances):
     """
     Function to get the types to include in results.
 
-    Parameters:
+    Arguments:
     include_embeddings (bool): Whether to include embeddings in the results.
     include_distances (bool): Whether to include distances in the results.
 
