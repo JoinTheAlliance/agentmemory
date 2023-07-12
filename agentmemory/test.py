@@ -9,12 +9,9 @@ from main import (
     count_memories,
     wipe_category,
     wipe_all_memories,
-    set_storage_path
-)
-
-from utils import (
+    set_storage_path,
     collection_to_list,
-    list_to_collection,
+    list_to_collection
 )
 
 wipe_all_memories()
