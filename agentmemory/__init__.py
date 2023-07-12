@@ -19,7 +19,10 @@ from .main import (
     wipe_category,
     wipe_all_memories,
     set_storage_path,
-    save_memory
+    save_memory,
+    get_chroma_client,
+    chroma_collection_to_list,
+    list_to_chroma_collection,
 )
 
 __all__ = [
@@ -33,5 +36,8 @@ __all__ = [
     "wipe_category",
     "wipe_all_memories",
     "set_storage_path",
-    "save_memory"
+    "save_memory",
+    "get_chroma_client",
+    "chroma_collection_to_list",
+    "list_to_chroma_collection",
 ]

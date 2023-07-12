@@ -162,3 +162,5 @@ cython_debug/
 
 .vscode/
 .chroma
+memory
+test

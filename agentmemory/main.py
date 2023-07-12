@@ -4,23 +4,6 @@ import chromadb
 persistent_path = None
 client = None
 
-
-def get_client():
-    """
-    Get the chromadb client.
-
-    Returns:
-    chromadb.Client: Chromadb client.
-
-    Example:
-    >>> get_client()
-    <chromadb.client.Client object at 0x7f7b9c2f0d00>
-    """
-    global client
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-    return client
-
-
 def create_memory(category, text, metadata=None, id=None, persist=True):
     """
     Function to create a new memory in a collection.
@@ -71,6 +54,8 @@ def search_memory(
     contains_text=None,
     include_embeddings=True,
     include_distances=True,
+    max_distance=None,  # 0.0 - 1.0
+    min_distance=None,  # 0.0 - 1.0
 ):
     """
     Function to search a collection with given query texts.
@@ -83,6 +68,10 @@ def search_memory(
     contains_text (str): Text that must be contained in the documents.
     include_embeddings (bool): Whether to include embeddings in the results.
     include_distances (bool): Whether to include distances in the results.
+    max_distance (float): Only include memories with this distance threshold maximum.
+        0.1 = most memories will be exluded, 1.0 = no memories will be excluded
+    min_distance (float): Only include memories that are at least this distance
+        0.0 = No memories will be excluded, 0.9 = most memories will be excluded
 
     Returns:
     list: List of search results.
@@ -117,8 +106,15 @@ def search_memory(
     query = flatten_arrays(query)
 
     # convert the query response to list and return
-    list = collection_to_list(query)
-    return list
+    result_list = chroma_collection_to_list(query)
+
+    if min_distance is not None and min_distance > 0:
+        result_list = [res for res in result_list if res["distance"] >= min_distance]
+
+    if max_distance is not None and max_distance < 1.0:
+        result_list = [res for res in result_list if res["distance"] <= max_distance]
+
+    return result_list
 
 
 def get_memory(category, id, include_embeddings=True):
@@ -148,7 +144,7 @@ def get_memory(category, id, include_embeddings=True):
     memory = memories.get(ids=[str(id)], limit=1, include=include_types)
 
     # Convert the collection to list format
-    memory = collection_to_list(memory)
+    memory = chroma_collection_to_list(memory)
 
     # Return the first (and only) memory in the list
     return memory[0]
@@ -157,6 +153,7 @@ def get_memory(category, id, include_embeddings=True):
 def get_memories(
     category,
     sort_order="desc",
+    contains_text=None,
     filter_metadata=None,
     n_results=20,
     include_embeddings=True,
@@ -185,11 +182,18 @@ def get_memories(
     # Get the types to include based on the function parameters
     include_types = get_include_types(include_embeddings, False)
 
+    where_document = None
+
+    if contains_text is not None:
+        where_document = {"$contains": contains_text}
+
     # Retrieve all memories that meet the given metadata filter
-    memories = memories.get(where=filter_metadata, include=include_types)
+    memories = memories.get(
+        where=filter_metadata, where_document=where_document, include=include_types
+    )
 
     # Convert the collection to list format
-    memories = collection_to_list(memories)
+    memories = chroma_collection_to_list(memories)
 
     # Sort memories by ID. If sort_order is 'desc', then the reverse parameter will be True, and memories will be sorted in descending order.
     memories.sort(key=lambda x: x["id"], reverse=sort_order == "desc")
@@ -419,10 +423,26 @@ def save_memory():
     client.persist()
 
 
-### UTILS ###
+### LOW LEVEL FUNCTIONS ###
 
 
-def collection_to_list(collection):
+def get_chroma_client():
+    """
+    Get the chromadb client.
+
+    Returns:
+    chromadb.Client: Chromadb client.
+
+    Example:
+    >>> get_chroma_client()
+    <chromadb.client.Client object at 0x7f7b9c2f0d00>
+    """
+    global client
+    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
+    return client
+
+
+def chroma_collection_to_list(collection):
     """
     Function to convert collection (dictionary) to list.
 
@@ -433,7 +453,7 @@ def collection_to_list(collection):
     list: Converted list of dictionaries.
 
     Example:
-    >>> collection_to_list(collection)
+    >>> chroma_collection_to_list(collection)
     [{'metadata': '...', 'document': '...', 'id': '...'}]
     """
 
@@ -491,7 +511,7 @@ def collection_to_list(collection):
     return list
 
 
-def list_to_collection(list):
+def list_to_chroma_collection(list):
     """
     Function to convert list (of dictionaries) to collection (dictionary).
 
@@ -502,7 +522,7 @@ def list_to_collection(list):
     dict: Converted dictionary.
 
     Example:
-    >>> list_to_collection(list)
+    >>> list_to_chroma_collection(list)
     {'metadatas': ['...'], 'documents': ['...'], 'ids': ['...'], 'embeddings': ['...'], 'distances': ['...']}
     """
     collection = {

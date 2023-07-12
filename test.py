@@ -1,7 +1,7 @@
-from main import (
+from agentmemory import (
     search_memory,
     get_memory,
-    get_client,
+    get_chroma_client,
     create_memory,
     get_memories,
     update_memory,
@@ -10,8 +10,8 @@ from main import (
     wipe_category,
     wipe_all_memories,
     set_storage_path,
-    collection_to_list,
-    list_to_collection
+    chroma_collection_to_list,
+    list_to_chroma_collection
 )
 
 wipe_all_memories()
@@ -35,18 +35,18 @@ memory = get_memories("test")
 assert memory[0]["document"] == "document 5"
 print("Passed create_memory tests")
 
-# collection_to_list
-collection = get_client().get_or_create_collection("test")
+# chroma_collection_to_list
+collection = get_chroma_client().get_or_create_collection("test")
 test_collection_data = collection.peek()
-list = collection_to_list(test_collection_data)
+list = chroma_collection_to_list(test_collection_data)
 
 assert list[0]["document"] == "document 1"
-print("Passed collection_to_list tests")
+print("Passed chroma_collection_to_list tests")
 
-new_collection_data = list_to_collection(list)
+new_collection_data = list_to_chroma_collection(list)
 
 assert test_collection_data["documents"][0] == "document 1"
-print("Passed list_to_collection tests")
+print("Passed list_to_chroma_collection tests")
 
 assert new_collection_data == test_collection_data
 print("Passed equality of collection test")
