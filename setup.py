@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='agentmemory',
-    version='0.1.11',
+    version='0.1.12',
     description='Easy-to-use agent memory, powered by chromadb',
     long_description=long_description,  # added this line
     long_description_content_type="text/markdown",  # and this line
