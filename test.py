@@ -1,3 +1,5 @@
+import os
+
 from agentmemory import (
     search_memory,
     get_memory,
@@ -10,16 +12,24 @@ from agentmemory import (
     wipe_category,
     wipe_all_memories,
     set_storage_path,
-    dump_memories,
     chroma_collection_to_list,
     list_to_chroma_collection,
+    export_memory_to_file,
+    import_file_to_memory
 )
 
+create_memory("test", "not document 2", metadata={"test": "test"})
 wipe_all_memories()
 
-set_storage_path("./test")
+create_memory("test", "not document 1", metadata={"test": "test"})
+export_memory_to_file("./test_memories.json")
+import_file_to_memory("./test_memories.json")
+os.remove("./test_memories.json")
 
-dump_memories("./testpath")
+test_memories = get_memories("test")
+assert test_memories[0]["document"] == "not document 1"
+
+set_storage_path("./test")
 
 wipe_category("test")
 

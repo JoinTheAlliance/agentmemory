@@ -122,7 +122,7 @@ delete_memory("conversation", 1)
 
 ## Create a Memory
 
-#### `create_memory(category, text, id=None, metadata=None, persist=True)`
+#### `create_memory(category, text, id=None, embedding=None, metadata=None, persist=True)`
 
 Create a new memory in a collection.
 
@@ -136,6 +136,7 @@ text (str): Document text.
 # Optional
 id (str): Unique id. Generated incrementally unless set.
 metadata (dict): Metadata.
+embedding (array): Embedding of the document. Defaults to None. Use if you already have an embedding.
 persist (bool): Whether to persist the changes to disk. Defaults to True.
 ```
 
@@ -411,11 +412,88 @@ path (string): the path to save to
     >>> save_memory()
 ```
 
+Sure, here's a Markdown formatted version that can be used in a `README.md` file:
+
+````markdown
+# Memory Management with ChromaDB
+
+This document provides a guide to using the memory management functions provided in the module.
+
+## Functions
+
+### Export Memories to JSON
+
+The `export_memory_to_json` function exports all memories to a dictionary, optionally including embeddings.
+
+##### Arguments
+
+- `include_embeddings` (bool, optional): Whether to include memory embeddings in the output. Defaults to True.
+
+**Returns:**
+
+- dict: A dictionary with collection names as keys and lists of memories as values.
+
+##### Example
+
+```python
+>>> export_memory_to_json()
+```
+````
+
+### Export Memories to File
+
+The `export_memory_to_file` function exports all memories to a JSON file, optionally including embeddings.
+
+##### Arguments
+
+- `path` (str, optional): The path to the output file. Defaults to "./memory.json".
+- `include_embeddings` (bool, optional): Whether to include memory embeddings in the output. Defaults to True.
+
+##### Example
+
+```python
+>>> export_memory_to_file(path="/path/to/output.json")
+```
+
+### Import Memories from JSON
+
+The `import_json_to_memory` function imports memories from a dictionary into the current database.
+
+##### Arguments
+
+- `data` (dict): A dictionary with collection names as keys and lists of memories as values.
+- `replace` (bool, optional): Whether to replace existing memories. If True, all existing memories will be deleted before import. Defaults to True.
+
+##### Example
+
+```python
+>>> import_json_to_memory(data)
+```
+
+### Import Memories from File
+
+The `import_file_to_memory` function imports memories from a JSON file into the current database.
+
+##### Arguments
+
+- `path` (str, optional): The path to the input file. Defaults to "./memory.json".
+- `replace` (bool, optional): Whether to replace existing memories. If True, all existing memories will be deleted before import. Defaults to True.
+
+##### Example
+
+```python
+>>> import_file_to_memory(path="/path/to/input.json")
+```
+
+````
+
+In the above Markdown, you may replace "ChromaDB" with the actual name of the module if it's different. You can include this in your `README.md` file to give your users a guide on how to use these functions.
+
 # Publishing
 
 ```bash
 bash publish.sh --version=<version> --username=<pypi_username> --password=<pypi_password>
-```
+````
 
 # Contributions Welcome
 
