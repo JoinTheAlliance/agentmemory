@@ -459,6 +459,37 @@ def save_memory():
     debug_log(f"Saved memory")
 
 
+def dump_memories(path="./memorydump.json", include_embeddings=True):
+    # create a JSON file of all memories
+    # could be really big, especially with embeddings
+    collections = get_chroma_client().list_collections()
+
+    print("Collections")
+    print(collections)
+
+    collections_dict = {}
+
+    for collection in collections:
+        print(collection)
+        collection_name = collection["name"]
+        collections_dict[collection_name] = []
+        memories = get_memories(collection_name, include_embeddings=include_embeddings)
+        for memory in memories:
+            collections_dict[collection_name].append(memory)
+
+    # write collections_dict to path
+    with open(path, "w") as outfile:
+        json.dump(collections_dict, outfile)
+
+    print("Dumped memories to", path)
+    return collections_dict
+
+
+def import_memories(path):
+    # import a JSON file into the database
+    print("TODO")
+
+
 ### LOW LEVEL FUNCTIONS ###
 
 

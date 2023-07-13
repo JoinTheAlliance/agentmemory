@@ -10,13 +10,16 @@ from agentmemory import (
     wipe_category,
     wipe_all_memories,
     set_storage_path,
+    dump_memories,
     chroma_collection_to_list,
-    list_to_chroma_collection
+    list_to_chroma_collection,
 )
 
 wipe_all_memories()
 
 set_storage_path("./test")
+
+dump_memories("./testpath")
 
 wipe_category("test")
 
