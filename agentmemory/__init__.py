@@ -26,8 +26,7 @@ from .main import (
     export_memory_to_json,
     export_memory_to_file,
     import_json_to_memory,
-    import_file_to_memory
-
+    import_file_to_memory,
 )
 
 __all__ = [
@@ -48,5 +47,5 @@ __all__ = [
     "export_memory_to_json",
     "export_memory_to_file",
     "import_json_to_memory",
-    "import_file_to_memory"
+    "import_file_to_memory",
 ]
