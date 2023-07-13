@@ -8,7 +8,7 @@ persistent_path = None
 client = None
 
 
-def create_memory(category, text, metadata={}, id=None, persist=True):
+def create_memory(category, text, metadata={}, embedding=None, id=None, persist=True):
     """
     Create a new memory in a collection.
 
@@ -44,6 +44,7 @@ def create_memory(category, text, metadata={}, id=None, persist=True):
         ids=[id],
         documents=[text],
         metadatas=[metadata],
+        embeddings=[embedding] if embedding is not None else None,
     )
 
     if persist:
@@ -459,9 +460,7 @@ def save_memory():
     debug_log(f"Saved memory")
 
 
-def dump_memories(path="./memorydump.json", include_embeddings=True):
-    # create a JSON file of all memories
-    # could be really big, especially with embeddings
+def all_memories_to_json(include_embeddings=True):
     collections = get_chroma_client().list_collections()
 
     print("Collections")
@@ -476,18 +475,31 @@ def dump_memories(path="./memorydump.json", include_embeddings=True):
         memories = get_memories(collection_name, include_embeddings=include_embeddings)
         for memory in memories:
             collections_dict[collection_name].append(memory)
-
-    # write collections_dict to path
-    with open(path, "w") as outfile:
-        json.dump(collections_dict, outfile)
-
-    print("Dumped memories to", path)
     return collections_dict
 
-
-def import_memories(path):
-    # import a JSON file into the database
+def export_memories(path="./memory.json", include_embeddings=True):
+    # export the database to a JSON file
     print("TODO")
+    # write collections_dict to path
+    with open(path, "w") as outfile:
+        json.dump(all_memories_to_json(include_embeddings), outfile)
+
+    debug_log(f"Dumped memories to {path}")
+
+
+def json_to_memories(data, include_embeddings=True, replace=True):
+    if(replace):
+        wipe_all_memories()
+
+    for category in data:
+        for memory in data[category]:
+            create_memory(category, memory["document"], memory["metadata"], memory["id"], persist=False)
+
+
+def import_memories(path="./memory.json", replace=True):
+    # import a JSON file into the database
+    with open(path, "r") as infile:
+        json_to_memories(json.load(infile), replace)
 
 
 ### LOW LEVEL FUNCTIONS ###
