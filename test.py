@@ -47,7 +47,7 @@ wipe_category("test")
 
 # rewrite as a for loop
 for i in range(5):
-    create_memory("test", "document " + str(i+1), metadata={"test": "test"})
+    create_memory("test", "document " + str(i + 1), metadata={"test": "test"})
 
 test_memories = get_memories("test")
 test_id = test_memories[0]["id"]
@@ -98,7 +98,7 @@ assert count_memories("test") == 0
 print("Passed wipe_category tests")
 
 for i in range(3):
-    create_memory("test", "document " + str(i+1), metadata={"test": "test"})
+    create_memory("test", "document " + str(i + 1), metadata={"test": "test"})
 assert count_memories("test") == 3
 print("Passed count_memories tests")
 
