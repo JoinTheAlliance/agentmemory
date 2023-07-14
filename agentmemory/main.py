@@ -99,6 +99,9 @@ def search_memory(
     # get or create the collection
     memories = client.get_or_create_collection(category)
 
+    if(memories.count()) == 0:
+        return []
+
     # min n_results to prevent searching for more elements than are available
     n_results = min(n_results, memories.count())
 
