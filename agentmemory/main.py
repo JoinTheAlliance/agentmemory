@@ -43,7 +43,7 @@ def create_memory(category, text, metadata={}, embedding=None, id=None, persist=
 
     # insert the document into the collection
     memories.upsert(
-        ids=[id],
+        ids=[str(id)],
         documents=[text],
         metadatas=[metadata],
         embeddings=[embedding] if embedding is not None else None,
