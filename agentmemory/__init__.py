@@ -4,7 +4,7 @@ agentmemory
 Simple agent memory, powered by chromadb
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __author__ = "Moon (https://github.com/lalalune)"
 __credits__ = "https://github.com/lalalune/agentmemory and https://www.trychroma.com/"
 
