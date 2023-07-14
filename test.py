@@ -15,10 +15,22 @@ from agentmemory import (
     chroma_collection_to_list,
     list_to_chroma_collection,
     export_memory_to_file,
-    import_file_to_memory
+    import_file_to_memory,
 )
 
-create_memory("test", "not document 2", metadata={"test": "test"})
+# create 10 memories
+for i in range(20):
+    create_memory("test", "document " + str(i), metadata={"test": "test"})
+
+memories = get_memories("test", n_results=10)
+
+# assert length of memories is 10
+assert len(memories) == 10
+
+# assert that the first memory is document 19
+assert memories[0]["document"] == "document 19"
+
+
 wipe_all_memories()
 
 create_memory("test", "not document 1", metadata={"test": "test"})
@@ -33,24 +45,20 @@ set_storage_path("./test")
 
 wipe_category("test")
 
-# create_memory tests
-create_memory("test", "document 1", metadata={"test": "test"})
-create_memory("test", "document 2", metadata={"test": "test"})
-create_memory("test", "document 3", metadata={"test": "test"})
-create_memory("test", "document 4", metadata={"test": "test"})
-create_memory("test", "document 5", metadata={"test": "test"})
+# rewrite as a for loop
+for i in range(5):
+    create_memory("test", "document " + str(i+1), metadata={"test": "test"})
 
-assert get_memory("test", 0)["document"] == "document 1"
+test_memories = get_memories("test")
+test_id = test_memories[0]["id"]
+memory = get_memory("test", test_id)
+assert memory["document"] == "document 5"
 
-print('count_memories("test")')
-print(count_memories("test"))
 num_memories = count_memories("test")
 assert num_memories == 5
-print("Passed count_memories tests")
 
 memory = get_memories("test")
 assert memory[0]["document"] == "document 5"
-print("Passed create_memory tests")
 
 # chroma_collection_to_list
 collection = get_chroma_client().get_or_create_collection("test")
@@ -58,7 +66,6 @@ test_collection_data = collection.peek()
 list = chroma_collection_to_list(test_collection_data)
 
 assert list[0]["document"] == "document 1"
-print("Passed chroma_collection_to_list tests")
 
 new_collection_data = list_to_chroma_collection(list)
 
@@ -75,9 +82,13 @@ search_results = search_memory(
 assert search_results[0]["document"] == "document 1"
 print("Passed search_memory tests")
 
+# Delete memory test
+create_memory("test", "delete memory test", metadata={"test": "test"})
+memories = get_memories("test")
+memory_id = memories[0]["id"]
 num_memories = count_memories("test")
 # test delete_memory
-delete_memory("test", 1)
+delete_memory("test", memory_id)
 assert count_memories("test") == num_memories - 1
 print("Passed delete_memory tests")
 
@@ -86,24 +97,28 @@ wipe_category("test")
 assert count_memories("test") == 0
 print("Passed wipe_category tests")
 
-# test wipe_all_memories
-create_memory("test", "document 1", metadata={"test": "test"})
-create_memory("test", "document 2", metadata={"test": "test"})
-create_memory("test", "document 3", metadata={"test": "test"})
-
+for i in range(3):
+    create_memory("test", "document " + str(i+1), metadata={"test": "test"})
 assert count_memories("test") == 3
+print("Passed count_memories tests")
 
 min_dist_limited_memories = search_memory("test", "document", min_distance=0.8)
 
 assert len(min_dist_limited_memories) == 0
 
 create_memory("test", "cinammon duck cakes")
-max_dist_limited_memories = search_memory("test", "cinammon duck cakes", max_distance=0.1)
+max_dist_limited_memories = search_memory(
+    "test", "cinammon duck cakes", max_distance=0.1
+)
 
 assert len(max_dist_limited_memories) == 1
 
-update_memory("test", 0, "document 1 updated", metadata={"test": "test"})
-assert get_memory("test", 0)["document"] == "document 1 updated"
+create_memory("test", "update memory test", metadata={"test": "test"})
+memories = get_memories("test")
+memory_id = memories[0]["id"]
+
+update_memory("test", memory_id, "document 1 updated", metadata={"test": "test"})
+assert get_memory("test", memory_id)["document"] == "document 1 updated"
 print("Passed update_memory tests")
 
 wipe_all_memories()

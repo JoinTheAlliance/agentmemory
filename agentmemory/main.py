@@ -99,6 +99,9 @@ def search_memory(
     # get or create the collection
     memories = client.get_or_create_collection(category)
 
+    # min n_results to prevent searching for more elements than are available
+    n_results = min(n_results, memories.count())
+
     # get the types to include
     include_types = get_include_types(include_embeddings, include_distances)
 
@@ -159,6 +162,12 @@ def get_memory(category, id, include_embeddings=True):
 
     debug_log(f"Got memory {id} from category {category}", memory)
 
+    if len(memory) == 0:
+        debug_log(
+            f"WARNING: Tried to get memory {id} from category {category} but it does not exist"
+        )
+        return None
+
     # Return the first (and only) memory in the list
     return memory[0]
 
@@ -191,6 +200,9 @@ def get_memories(
 
     # Get or create the collection for the given category
     memories = client.get_or_create_collection(category)
+
+    # min n_results to prevent searching for more elements than are available
+    n_results = min(n_results, memories.count())
 
     # Get the types to include based on the function parameters
     include_types = get_include_types(include_embeddings, False)
@@ -287,6 +299,9 @@ def delete_memory(category, id, persist=True):
     # Get or create the collection for the given category
     memories = client.get_or_create_collection(category)
 
+    if memory_exists(category, id) is False:
+        debug_log(f"WARNING: Tried could not delete memory {id} in category {category}")
+        return
     # Delete the memory
     memories.delete(ids=[str(id)])
 
@@ -342,15 +357,19 @@ def wipe_category(category, persist=True):
         >>> wipe_category("books")
     """
 
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
+    collection = None
 
-    # Delete the entire category
-    client.delete_collection(category)
+    try:
+        collection = client.get_collection(category)  # Check if the category exists
+    except:
+        pass
 
-    if persist:
-        persist_memory()
+    if collection is not None:
+        # Delete the entire category
+        client.delete_collection(category)
 
-    debug_log(f"Wiped category {category}")
+        if persist:
+            client.persist()
 
 
 def count_memories(category):
