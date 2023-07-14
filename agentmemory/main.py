@@ -38,8 +38,8 @@ def create_memory(category, text, metadata={}, embedding=None, id=None, persist=
     # if no id is provided, generate one based on count of documents in collection
     if id is None:
         id = str(memories.count())
-        # pad the id with zeros to make it 10 digits long
-        id = id.zfill(10)
+        # pad the id with zeros to make it 16 digits long
+        id = id.zfill(16)
 
     # insert the document into the collection
     memories.upsert(
