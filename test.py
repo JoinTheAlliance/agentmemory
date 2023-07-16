@@ -117,8 +117,8 @@ create_memory("test", "update memory test", metadata={"test": "test"})
 memories = get_memories("test")
 memory_id = memories[0]["id"]
 
-update_memory("test", memory_id, "document 1 updated", metadata={"test": "test"})
-assert get_memory("test", memory_id)["document"] == "document 1 updated"
+update_memory("test", memory_id, "doc 1 updated", metadata={"test": "test"})
+assert get_memory("test", memory_id)["document"] == "doc 1 updated"
 print("Passed update_memory tests")
 
 wipe_all_memories()

@@ -41,6 +41,13 @@ def create_memory(category, text, metadata={}, embedding=None, id=None, persist=
         # pad the id with zeros to make it 16 digits long
         id = id.zfill(16)
 
+    # for each field in metadata...
+    # if the field is a boolean, convert it to a string
+    for key, value in metadata.items():
+        if isinstance(value, bool):
+            print(f"WARNING: Boolean metadata field {key} converted to string")
+            metadata[key] = str(value)
+
     # insert the document into the collection
     memories.upsert(
         ids=[str(id)],
@@ -99,7 +106,7 @@ def search_memory(
     # get or create the collection
     memories = client.get_or_create_collection(category)
 
-    if(memories.count()) == 0:
+    if (memories.count()) == 0:
         return []
 
     # min n_results to prevent searching for more elements than are available
@@ -364,8 +371,8 @@ def wipe_category(category, persist=True):
 
     try:
         collection = client.get_collection(category)  # Check if the category exists
-    except:
-        pass
+    except Exception:
+        debug_log(f"WARNING: Tried to wipe category {category} but it does not exist")
 
     if collection is not None:
         # Delete the entire category
@@ -419,7 +426,7 @@ def wipe_all_memories(persist=True):
     if persist:
         persist_memory()
 
-    debug_log(f"Wiped all memories")
+    debug_log("Wiped all memories")
 
 
 def check_client_initialized():
@@ -482,24 +489,6 @@ def save_memory():
     persist_memory()
 
     debug_log(f"Saved memory")
-
-
-def export_memory_to_json(include_embeddings=True):
-    collections = get_chroma_client().list_collections()
-
-    print("Collections")
-    print(collections)
-
-    collections_dict = {}
-
-    for collection in collections:
-        print(collection)
-        collection_name = collection["name"]
-        collections_dict[collection_name] = []
-        memories = get_memories(collection_name, include_embeddings=include_embeddings)
-        for memory in memories:
-            collections_dict[collection_name].append(memory)
-    return collections_dict
 
 
 def export_memory_to_json(include_embeddings=True):
@@ -632,7 +621,7 @@ def debug_log(message, dict=None):
 def persist_memory():
     if persistent_path is not None:
         client.persist()
-        debug_log(f"Persisted memory")
+        debug_log("Persisted memory")
 
 
 def get_chroma_client():
@@ -648,7 +637,7 @@ def get_chroma_client():
     """
     global client
     check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-    debug_log(f"Getting chroma client")
+    debug_log("Getting chroma client")
     return client
 
 
@@ -717,7 +706,7 @@ def chroma_collection_to_list(collection):
                 "id": id,
             }
         )
-    debug_log(f"Collection to list", {"collection": collection, "list": list})
+    debug_log("Collection to list", {"collection": collection, "list": list})
     return list
 
 
@@ -763,7 +752,7 @@ def list_to_chroma_collection(list):
     if len(collection["distances"]) == 0:
         del collection["distances"]
 
-    debug_log(f"List to collection", {"collection": collection, "list": list})
+    debug_log("List to collection", {"collection": collection, "list": list})
     return collection
 
 
@@ -785,7 +774,7 @@ def flatten_arrays(collection):
     # Iterate over each key in collection
     for key in collection:
         # If no values, continue to next iteration
-        if collection[key] == None:
+        if collection[key] is None:
             continue
         # Flatten the arrays into a single array for each key
         collection[key] = [item for sublist in collection[key] for item in sublist]
@@ -819,5 +808,5 @@ def get_include_types(include_embeddings, include_distances):
     if include_distances:
         include_types.append("distances")
 
-    debug_log(f"Get include types", {"include_types": include_types})
+    debug_log("Get include types", {"include_types": include_types})
     return include_types
