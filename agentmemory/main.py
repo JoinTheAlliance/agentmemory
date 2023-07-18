@@ -115,6 +115,15 @@ def search_memory(
     # get the types to include
     include_types = get_include_types(include_embeddings, include_distances)
 
+    # filter_metadata is a dictionary of metadata to filter by
+    if filter_metadata is not None and len(filter_metadata.keys()) > 1:
+        # map each key:value in filter_metadata to an object shaped like { "key": { "$eq": "value" } }
+        filter_metadata = [
+            {key: {"$eq": value}} for key, value in filter_metadata.items()
+        ]
+
+        filter_metadata = {"$and": filter_metadata}
+
     # perform the query and get the response
     query = memories.query(
         query_texts=[search_text],
@@ -221,6 +230,15 @@ def get_memories(
 
     if contains_text is not None:
         where_document = {"$contains": contains_text}
+
+    # filter_metadata is a dictionary of metadata to filter by
+    if filter_metadata is not None and len(filter_metadata.keys()) > 1:
+        # map each key:value in filter_metadata to an object shaped like { "key": { "$eq": "value" } }
+        filter_metadata = [
+            {key: {"$eq": value}} for key, value in filter_metadata.items()
+        ]
+
+        filter_metadata = {"$and": filter_metadata}
 
     # Retrieve all memories that meet the given metadata filter
     memories = memories.get(

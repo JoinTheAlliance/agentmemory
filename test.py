@@ -21,9 +21,9 @@ from agentmemory import (
 def test_memory_creation_and_retrieval():
     # create 10 memories
     for i in range(20):
-        create_memory("test", "document " + str(i), metadata={"test": "test"})
+        create_memory("test", "document " + str(i), metadata={"test": "test", "test2": "test2"})
 
-    memories = get_memories("test", n_results=10)
+    memories = get_memories("test", filter_metadata={"test": "test", "test2": "test2"}, n_results=10)
 
     # assert length of memories is 10
     assert len(memories) == 10
@@ -65,10 +65,10 @@ def test_memory_update():
 def test_search_memory():
     # rewrite as a for loop
     for i in range(5):
-        create_memory("test", "document " + str(i + 1), metadata={"test": "test"})
+        create_memory("test", "document " + str(i + 1), metadata={"test": "test", "test2": "test2", "test3": "test3"})
 
     search_results = search_memory(
-        "test", "document 1", n_results=5, filter_metadata=None, contains_text=None
+        "test", "document 1", n_results=5, filter_metadata={"test": "test", "test2": "test2"}, contains_text=None
     )
 
     assert search_results[0]["document"] == "document 1"
