@@ -4,7 +4,7 @@ import datetime
 
 import chromadb
 
-persistent_path = None
+persist_directory = None
 client = None
 
 
@@ -456,18 +456,10 @@ def check_client_initialized():
     """
     global client
     if client is None:
-        if persistent_path is not None:
-            client = chromadb.Client(
-                chromadb.Settings(
-                    chroma_db_impl="duckdb+parquet", persist_directory=persistent_path
-                )
-            )
-        else:
-            client = chromadb.Client(
-                chromadb.Settings(
-                    chroma_db_impl="duckdb+parquet", persist_directory="./memory"
-                )
-            )
+        if persist_directory is None:
+            persist_directory="./memory"
+        
+            client = chromadb.PersistentClient(persist_directory)
 
     debug_log(f"Checking if client is initialized")
 
@@ -482,16 +474,18 @@ def set_storage_path(path):
     Example:
         >>> set_storage_path("path/to/persistent/directory")
     """
-    global persistent_path
+    global persist_directory
     global client
-    persistent_path = path
+    persist_directory = path
+    # save old memory if it hasn't been saved yet
     if client is not None:
         persist_memory()
-    client = chromadb.Client(
-        chromadb.Settings(
-            chroma_db_impl="duckdb+parquet", persist_directory=persistent_path
-        )
-    )
+
+    # reset path
+    if persist_directory is None:
+            persist_directory="./memory"
+    
+    client = chromadb.PersistentClient(persist_directory)
 
     debug_log(f"Set storage path to {path}")
 
@@ -637,7 +631,7 @@ def debug_log(message, dict=None):
 
 
 def persist_memory():
-    if persistent_path is not None:
+    if persist_directory is not None:
         client.persist()
         debug_log("Persisted memory")
 
