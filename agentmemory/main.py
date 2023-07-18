@@ -8,7 +8,7 @@ persist_directory = None
 client = None
 
 
-def create_memory(category, text, metadata={}, embedding=None, id=None, persist=True):
+def create_memory(category, text, metadata={}, embedding=None, id=None):
     """
     Create a new memory in a collection.
 
@@ -17,7 +17,6 @@ def create_memory(category, text, metadata={}, embedding=None, id=None, persist=
     text (str): Document text.
     id (str): Unique id.
     metadata (dict): Metadata.
-    persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
 
     Returns:
     None
@@ -55,9 +54,6 @@ def create_memory(category, text, metadata={}, embedding=None, id=None, persist=
         metadatas=[metadata],
         embeddings=[embedding] if embedding is not None else None,
     )
-
-    if persist:
-        persist_memory()
 
     debug_log(f"Created memory {id}: {text}", metadata)
 
@@ -259,7 +255,7 @@ def get_memories(
     return memories
 
 
-def update_memory(category, id, text=None, metadata=None, persist=True):
+def update_memory(category, id, text=None, metadata=None):
     """
     Update a memory with new text and/or metadata.
 
@@ -268,7 +264,6 @@ def update_memory(category, id, text=None, metadata=None, persist=True):
         id (str/int): The ID of the memory.
         text (str, optional): The new text of the memory. Defaults to None.
         metadata (dict, optional): The new metadata of the memory. Defaults to None.
-        persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
 
     Returns:
         None
@@ -297,23 +292,19 @@ def update_memory(category, id, text=None, metadata=None, persist=True):
     # Update the memory with the new text and/or metadata
     memories.update(ids=[str(id)], documents=documents, metadatas=metadatas)
 
-    if persist:
-        persist_memory()
-
     debug_log(
         f"Updated memory {id} in category {category}",
         {"documents": documents, "metadatas": metadatas},
     )
 
 
-def delete_memory(category, id, persist=True):
+def delete_memory(category, id):
     """
     Delete a memory by ID.
 
     Arguments:
         category (str): The category of the memory.
         id (str/int): The ID of the memory.
-        persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
 
     Returns:
         None
@@ -332,9 +323,6 @@ def delete_memory(category, id, persist=True):
         return
     # Delete the memory
     memories.delete(ids=[str(id)])
-
-    if persist:
-        persist_memory()
 
     debug_log(f"Deleted memory {id} in category {category}")
 
@@ -373,13 +361,12 @@ def memory_exists(category, id, includes_metadata=None):
     return exists
 
 
-def wipe_category(category, persist=True):
+def wipe_category(category):
     """
     Delete an entire category of memories.
 
     Arguments:
         category (str): The category to delete.
-        persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
 
     Example:
         >>> wipe_category("books")
@@ -395,9 +382,6 @@ def wipe_category(category, persist=True):
     if collection is not None:
         # Delete the entire category
         client.delete_collection(category)
-
-        if persist:
-            client.persist()
 
 
 def count_memories(category):
@@ -425,24 +409,22 @@ def count_memories(category):
     return memories.count()
 
 
-def wipe_all_memories(persist=True):
+def wipe_all_memories():
     """
     Delete all memories across all categories.
-
-    Arguments:
-        persist (bool, optional): Whether to persist the changes to disk. Defaults to True.
 
     Example:
         >>> wipe_all_memories()
     """
 
     check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
+    client = get_chroma_client()
+    collections = client.list_collections()
 
-    # Reset the entire client, which deletes all collections and their memories
-    client.reset()
+    # Iterate over all collections
+    for collection in collections:
+        client.delete_collection(collection.name)
 
-    if persist:
-        persist_memory()
 
     debug_log("Wiped all memories")
 
@@ -455,11 +437,12 @@ def check_client_initialized():
         >>> check_client_initialized()
     """
     global client
+    global persist_directory
     if client is None:
         if persist_directory is None:
             persist_directory="./memory"
         
-            client = chromadb.PersistentClient(persist_directory)
+        client = chromadb.PersistentClient(persist_directory)
 
     debug_log(f"Checking if client is initialized")
 
@@ -477,9 +460,6 @@ def set_storage_path(path):
     global persist_directory
     global client
     persist_directory = path
-    # save old memory if it hasn't been saved yet
-    if client is not None:
-        persist_memory()
 
     # reset path
     if persist_directory is None:
@@ -498,7 +478,6 @@ def save_memory():
         >>> save_to_disk()
     """
     check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-    persist_memory()
 
     debug_log(f"Saved memory")
 
@@ -578,7 +557,7 @@ def import_json_to_memory(data, replace=True):
 
     # If replace flag is set to True, wipe out all existing memories
     if replace:
-        wipe_all_memories(False)
+        wipe_all_memories()
 
     # Iterate over all collections in the input data
     for category in data:
@@ -591,11 +570,7 @@ def import_json_to_memory(data, replace=True):
                 metadata=memory["metadata"],
                 id=memory["id"],
                 embedding=memory.get("embedding", None),
-                persist=False,
             )
-
-    # Once all memories have been created, persist them to disk
-    persist_memory()
 
 
 def import_file_to_memory(path="./memory.json", replace=True):
@@ -628,12 +603,6 @@ def debug_log(message, dict=None):
         if dict is not None:
             message = message + f" ({json.dumps(dict)})"
         print(message)
-
-
-def persist_memory():
-    if persist_directory is not None:
-        client.persist()
-        debug_log("Persisted memory")
 
 
 def get_chroma_client():

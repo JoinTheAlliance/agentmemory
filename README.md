@@ -122,7 +122,7 @@ delete_memory("conversation", 1)
 
 ## Create a Memory
 
-#### `create_memory(category, text, id=None, embedding=None, metadata=None, persist=True)`
+#### `create_memory(category, text, id=None, embedding=None, metadata=None)`
 
 Create a new memory in a collection.
 
@@ -137,13 +137,12 @@ text (str): Document text.
 id (str): Unique id. Generated incrementally unless set.
 metadata (dict): Metadata.
 embedding (array): Embedding of the document. Defaults to None. Use if you already have an embedding.
-persist (bool): Whether to persist the changes to disk. Defaults to True.
 ```
 
 ##### Example
 
 ```python
->>> create_memory(category='sample_category', text='sample_text', id='sample_id', metadata={'sample_key': 'sample_value'}, persist=True)
+>>> create_memory(category='sample_category', text='sample_text', id='sample_id', metadata={'sample_key': 'sample_value'})
 ```
 
 ## Search Memory
@@ -248,7 +247,7 @@ list: List of retrieved memories.
 
 ## Update a Memory
 
-#### `update_memory(category, id, text=None, metadata=None, persist=True)`
+#### `update_memory(category, id, text=None, metadata=None)`
 
 Update a memory with new text and/or metadata.
 
@@ -262,14 +261,13 @@ id (str/int): The ID of the memory.
 # Optional
 text (str): The new text of the memory. Defaults to None.
 metadata (dict): The new metadata of the memory. Defaults to None.
-persist (bool): Whether to persist the changes to disk. Defaults to True.
 ```
 
 ##### Example
 
 ```python
 # with keyword arguments
-update_memory(category="conversation", id=1, text="Okay, I will open the podbay doors.", metadata={ "speaker": "HAL", "sentiment": "positive" }, persist=True)
+update_memory(category="conversation", id=1, text="Okay, I will open the podbay doors.", metadata={ "speaker": "HAL", "sentiment": "positive" })
 
 # with positional arguments
 update_memory("conversation", 1, "Okay, I will open the podbay doors.")
@@ -277,7 +275,7 @@ update_memory("conversation", 1, "Okay, I will open the podbay doors.")
 
 ## Delete a Memory
 
-#### `delete_memory(category, id, contains_metadata=None, contains_text=None, persist=True)`
+#### `delete_memory(category, id, contains_metadata=None, contains_text=None)`
 
 Delete a memory by ID.
 
@@ -289,7 +287,6 @@ category (str): The category of the memory.
 id (str/int): The ID of the memory.
 
 # Optional
-persist (bool): Whether to persist the changes to disk. Defaults to True.
 ```
 
 ##### Example
@@ -323,7 +320,7 @@ includes_metadata (dict): Metadata that the memory should include. Defaults to N
 
 ## Wipe an Entire Category of Memories
 
-#### `wipe_category(category, persist=True)`
+#### `wipe_category(category)`
 
 Delete an entire category of memories.
 
@@ -334,7 +331,6 @@ Delete an entire category of memories.
 category (str): The category to delete.
 
 # Optional
-persist (bool): Whether to persist the changes to disk. Defaults to True.
 ```
 
 ##### Example
@@ -369,7 +365,7 @@ int: The number of memories.
 
 ## Wipe All Memories
 
-#### `wipe_all_memories(persist=True)`
+#### `wipe_all_memories()`
 
 Delete all memories across all categories.
 
@@ -377,7 +373,6 @@ Delete all memories across all categories.
 
 ```
 # Optional
-persist (bool): Whether to persist the changes to disk. Defaults to True.
 ```
 
 ##### Example
