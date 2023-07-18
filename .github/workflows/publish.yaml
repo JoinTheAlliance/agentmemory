@@ -32,5 +32,5 @@ jobs:
         pip install build
     - name: Build package
       run: |
-        echo publishing ${{ secrets.pypi_username }}
-        bash publish.sh --version=${{ vars.GITHUB_REF }} --username=${{ secrets.pypi_username }} --password=${{ secrets.pypi_password }}
+        echo "publishing ${{ github.ref }} by ${{ secrets.pypi_username }}""
+        bash publish.sh --version=${{ github.ref }} --username=${{ secrets.pypi_username }} --password=${{ secrets.pypi_password }}
