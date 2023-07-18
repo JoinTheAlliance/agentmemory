@@ -283,6 +283,12 @@ def update_memory(category, id, text=None, metadata=None):
     # If neither text nor metadata is provided, raise an exception
     if metadata is None and text is None:
         raise Exception("No text or metadata provided")
+    if metadata is not None:
+        # for each key value in metadata -- if the type is boolean, convert it to string
+        for key, value in metadata.items():
+            if isinstance(value, bool):
+                print(f"WARNING: Boolean metadata field {key} converted to string")
+                metadata[key] = str(value)
 
     metadata["updated_at"] = datetime.datetime.now().timestamp()
 
