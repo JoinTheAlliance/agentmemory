@@ -412,9 +412,6 @@ path (string): the path to save to
     >>> save_memory()
 ```
 
-Sure, here's a Markdown formatted version that can be used in a `README.md` file:
-
-````markdown
 # Memory Management with ChromaDB
 
 This document provides a guide to using the memory management functions provided in the module.
@@ -438,7 +435,6 @@ The `export_memory_to_json` function exports all memories to a dictionary, optio
 ```python
 >>> export_memory_to_json()
 ```
-````
 
 ### Export Memories to File
 
@@ -493,10 +489,11 @@ In the above Markdown, you may replace "ChromaDB" with the actual name of the mo
 
 ```bash
 bash publish.sh --version=<version> --username=<pypi_username> --password=<pypi_password>
-````
+```
 
 # Contributions Welcome
 
 If you like this library and want to contribute in any way, please feel free to submit a PR and I will review it. Please note that the goal here is simplicity and accesibility, using common language and few dependencies.
 
 <img src="resources/youcreatethefuture.jpg">
+````
