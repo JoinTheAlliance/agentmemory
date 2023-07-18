@@ -1,3 +1,4 @@
+import os
 from setuptools import setup
 
 long_description = ""
@@ -12,6 +13,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='agentmemory',
+    version="0.0.0",
     description='Easy-to-use agent memory, powered by chromadb',
     long_description=long_description,  # added this line
     long_description_content_type="text/markdown",  # and this line
