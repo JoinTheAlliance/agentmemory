@@ -44,6 +44,7 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
     # if the field is a boolean, convert it to a string
     for key, value in metadata.items():
         if isinstance(value, bool):
+            print(f"WARNING: Boolean metadata field {key} converted to string")
             metadata[key] = str(value)
 
     # insert the document into the collection
@@ -286,6 +287,7 @@ def update_memory(category, id, text=None, metadata=None):
         # for each key value in metadata -- if the type is boolean, convert it to string
         for key, value in metadata.items():
             if isinstance(value, bool):
+                print(f"WARNING: Boolean metadata field {key} converted to string")
                 metadata[key] = str(value)
 
     metadata["updated_at"] = datetime.datetime.now().timestamp()
