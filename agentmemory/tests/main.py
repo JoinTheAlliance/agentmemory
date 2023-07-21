@@ -9,6 +9,7 @@ from agentmemory import (
     wipe_category,
     wipe_all_memories,
 )
+from agentmemory.main import create_unique_memory, delete_similar_memories
 
 
 def test_memory_creation_and_retrieval():
@@ -93,3 +94,34 @@ def test_memory_search_distance():
 def test_wipe_all_memories():
     wipe_all_memories()
     assert count_memories("test") == 0
+
+def test_create_unique_memory():
+    wipe_all_memories()
+    # Test creating a unique memory
+    create_unique_memory("test", "unique_memory_1")
+    memories = get_memories("test")
+    assert len(memories) == 1
+    assert memories[0]["metadata"]["unique"] == "True"
+
+    # Test creating a non-unique memory similar to the existing one
+    create_unique_memory("test", "unique_memory_1s")
+    memories = get_memories("test")
+    assert len(memories) == 2
+    assert memories[0]["metadata"]["unique"] == "False"
+
+
+def test_delete_similar_memories():
+    wipe_all_memories()
+    # Create a memory and a similar memory
+    create_memory("test", "similar_memory_1")
+    create_memory("test", "similar_memory_2")
+
+    # Test deleting a similar memory
+    assert delete_similar_memories("test", "similar_memory_1", similarity_threshold=0.999999) is True
+    memories = get_memories("test")
+    assert len(memories) == 1
+
+    # Test deleting a non-similar memory
+    assert delete_similar_memories("test", "not_similar_memory") is False
+    memories = get_memories("test")
+    assert len(memories) == 1
