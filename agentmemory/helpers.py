@@ -17,10 +17,10 @@ DEFAULT_TYPE_COLORS = {
     "info": "blue",
     "prompt": "cyan",
     "success": "green",
-    "debug": "magenta",
     "critical": "red",
     "system": "magenta",
 }
+
 
 def strip_embeddings(value):
     if isinstance(value, dict):
@@ -37,6 +37,7 @@ def strip_embeddings(value):
             value[i] = strip_embeddings(value[i])
     return value
 
+
 def debug_log(
     content,
     input_dict=None,
@@ -50,7 +51,7 @@ def debug_log(
         return
 
     color = type_colors.get(type, color)
-    
+
     if input_dict is not None:
         # traverse the dict and find any value called "embedding"
         # set "embedding" value to [] to avoid printing it

@@ -52,11 +52,13 @@ create_memory("conversation", "I can't do that, Dave.", debug=True)
 ```python
 from agentmemory import (
     create_memory,
+    create_unique_memory,
     get_memories,
     search_memory,
     get_memory,
     update_memory,
     delete_memory,
+    delete_similar_memories,
     count_memories,
     wipe_category,
     wipe_all_memories
@@ -124,7 +126,23 @@ update_memory("conversation", 1, "Okay, I will open the podbay doors.")
 delete_memory("conversation", 1)
 ```
 
-# Documentation
+### Delete Similar Memories
+
+#### `delete_similar_memories(category, content, similarity_threshold=0.95)`
+
+Search for memories that are similar to the one that contains the given content and removes them.
+
+##### Parameters
+
+- `category` (str): The category of the collection.
+- `content` (str): The content to search for.
+- `similarity_threshold` (float, optional): The threshold for determining similarity. Defaults to 0.95.
+
+##### Returns
+
+- `bool`: True if the memory item is found and removed, False otherwise.
+
+# API Reference
 
 ## Create a Memory
 
@@ -150,6 +168,23 @@ embedding (array): Embedding of the document. Defaults to None. Use if you alrea
 ```python
 >>> create_memory(category='sample_category', text='sample_text', id='sample_id', metadata={'sample_key': 'sample_value'})
 ```
+
+### Create Unique Memory
+
+#### `create_unique_memory(category, content, metadata={}, similarity=0.95)`
+
+Create a new memory only if there aren't any that are very similar to it. If a similar memory is found, the new memory's "unique" metadata field is set to "False" and it is linked to the existing memory.
+
+##### Parameters
+
+- `category` (str): The category of the collection.
+- `content` (str): The text of the memory.
+- `metadata` (dict, optional): Metadata for the memory.
+- `similarity` (float, optional): The threshold for determining similarity.
+
+##### Returns
+
+None
 
 ## Search Memory
 
@@ -387,7 +422,6 @@ Delete all memories across all categories.
 >>> wipe_all_memories()
 ```
 
-
 # Memory Management with ChromaDB
 
 This document provides a guide to using the memory management functions provided in the module.
@@ -457,19 +491,8 @@ The `import_file_to_memory` function imports memories from a JSON file into the 
 >>> import_file_to_memory(path="/path/to/input.json")
 ```
 
-````
-
-In the above Markdown, you may replace "ChromaDB" with the actual name of the module if it's different. You can include this in your `README.md` file to give your users a guide on how to use these functions.
-
-# Publishing
-
-```bash
-bash publish.sh --version=<version> --username=<pypi_username> --password=<pypi_password>
-```
-
 # Contributions Welcome
 
 If you like this library and want to contribute in any way, please feel free to submit a PR and I will review it. Please note that the goal here is simplicity and accesibility, using common language and few dependencies.
 
 <img src="resources/youcreatethefuture.jpg">
-````

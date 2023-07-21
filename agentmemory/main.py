@@ -66,8 +66,8 @@ def create_unique_memory(category, content, metadata={}, similarity=0.95):
     Creates a new memory if there aren't any that are very similar to it
 
     Parameters:
-    - content (str): The content of the knowledge.
-    - metadata (dict, optional): Additional metadata for the knowledge.
+    - content (str): The content of the memory.
+    - metadata (dict, optional): Additional metadata for the memory.
         Defaults to empty dictionary.
     - similarity (float, optional): The threshold for determining similarity.
         Defaults to DEFAULT_SIMILARY_THRESHOLD.
@@ -88,14 +88,13 @@ def create_unique_memory(category, content, metadata={}, similarity=0.95):
 
     if len(memories) == 0:
         metadata["unique"] = "True"
-        # Create a new knowledge item
         create_memory(category, content, metadata=metadata)
         return
 
     metadata["unique"] = "False"
     metadata["related_to"] = memories[0]["id"]
     metadata["related_document"] = memories[0]["document"]
-    create_memory("knowledge", content, metadata=metadata)
+    create_memory(category, content, metadata=metadata)
 
 
 def search_memory(
@@ -385,22 +384,34 @@ def delete_similar_memories(category, content, similarity_threshold=0.95):
     - content (str): The content to search for.
     - similarity_threshold (float, optional): The threshold for determining similarity. Defaults to DEFAULT_SIMILARY_THRESHOLD.
 
-    Returns: bool - True if the knowledge item is found and removed, False otherwise.
+    Returns: bool - True if the memory item is found and removed, False otherwise.
     """
 
     memories = search_memory(category, content)
+    memories_to_delete = []
+
+    # find similar memories
     if len(memories) > 0:
-        goal = memories[0]
-        goal_similarity = 1.0 - goal["distance"]
-        if goal_similarity > similarity_threshold:
-            goal_id = goal["id"]
-            delete_memory(category, goal_id)
-            return True
+        for memory in memories:
+            goal_similarity = 1.0 - memory["distance"]
+            if goal_similarity > similarity_threshold:
+                memories_to_delete.append(memory["id"])
+            else:
+                # responses are sorted by similarity, so ignore the rest
+                break
+
+    if len(memories_to_delete) > 0:
+        debug_log(
+            f"Deleting similar memories to {content} in category {category}",
+            memories_to_delete,
+        )
+        for memory in memories_to_delete:
+            delete_memory(category, memory)
     debug_log(
         f"WARNING: Tried to delete similar memories to {content} in category {category} but none were found",
         type="warning",
     )
-    return False
+    return len(memories_to_delete) > 0
 
 
 def memory_exists(category, id, includes_metadata=None):
@@ -500,10 +511,10 @@ def wipe_all_memories():
 
     check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
     client = get_chroma_client()
-    collections = get_chroma_client().list_collections()
+    collections = client.list_collections()
 
     # Iterate over all collections
     for collection in collections:
-        get_chroma_client().delete_collection(collection.name)
+        client.delete_collection(collection.name)
 
-    debug_log("Wiped all memories")
+    debug_log("Wiped all memories", type="system")
