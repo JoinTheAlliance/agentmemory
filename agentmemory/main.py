@@ -107,6 +107,7 @@ def search_memory(
     include_distances=True,
     max_distance=None,  # 0.0 - 1.0
     min_distance=None,  # 0.0 - 1.0
+    unique=False
 ):
     """
     Cearch a collection with given query texts.
@@ -123,6 +124,7 @@ def search_memory(
         0.1 = most memories will be exluded, 1.0 = no memories will be excluded
     min_distance (float): Only include memories that are at least this distance
         0.0 = No memories will be excluded, 0.9 = most memories will be excluded
+    unique (bool): Only include memories that are marked as unique
 
     Returns:
     list: List of search results.
@@ -158,6 +160,11 @@ def search_memory(
         ]
 
         filter_metadata = {"$and": filter_metadata}
+
+    if unique:
+        if filter_metadata is None:
+            filter_metadata = {}
+        filter_metadata["unique"] = "True"
 
     # perform the query and get the response
     query = memories.query(
@@ -234,6 +241,7 @@ def get_memories(
     filter_metadata=None,
     n_results=20,
     include_embeddings=True,
+    unique=False
 ):
     """
     Retrieve a list of memories from a given category, sorted by ID, with optional filtering.
@@ -244,6 +252,7 @@ def get_memories(
         filter_metadata (dict, optional): Filter to apply on metadata. Defaults to None.
         n_results (int, optional): The number of results to return. Defaults to 20.
         include_embeddings (bool, optional): Whether to include the embeddings. Defaults to True.
+        unique (bool, optional): Whether to only include memories that are marked as unique. Defaults to False.
 
     Returns:
         list: List of retrieved memories.
@@ -275,6 +284,11 @@ def get_memories(
         ]
 
         filter_metadata = {"$and": filter_metadata}
+    
+    if unique:
+        if filter_metadata is None:
+            filter_metadata = {}
+        filter_metadata["unique"] = "True"
 
     # Retrieve all memories that meet the given metadata filter
     memories = memories.get(
@@ -448,7 +462,7 @@ def memory_exists(category, id, includes_metadata=None):
     return exists
 
 
-def count_memories(category):
+def count_memories(category, unique=False):
     """
     Count the number of memories in a given category.
 
@@ -466,6 +480,9 @@ def count_memories(category):
 
     # Get or create the collection for the given category
     memories = get_chroma_client().get_or_create_collection(category)
+
+    if unique:
+        memories = memories.get(where={"unique": "True"})
 
     debug_log(f"Counted memories in {category}: {memories.count()}")
 

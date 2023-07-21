@@ -188,7 +188,7 @@ None
 
 ## Search Memory
 
-#### `search_memory(category, search_text, n_results=5, min_distance=None, max_distance=None, filter_metadata=None, contains_text=None, include_embeddings=True)`
+#### `search_memory(category, search_text, n_results=5, min_distance=None, max_distance=None, filter_metadata=None, contains_text=None, include_embeddings=True, unique=False)`
 
 Search a collection with given query texts.
 
@@ -211,6 +211,7 @@ max_distance (float): Only include memories with this distance threshold maximum
     0.1 = most memories will be exluded, 1.0 = no memories will be excluded
 min_distance (float): Only include memories that are at least this distance
     0.0 = No memories will be excluded, 0.9 = most memories will be excluded
+unique (bool): Whether to return only unique memories.
 ```
 
 ##### Returns
@@ -257,7 +258,7 @@ dict: The retrieved memory.
 
 ## Get Memories
 
-#### `get_memories(category, sort_order="desc", filter_metadata=None, n_results=20, include_embeddings=True)`
+#### `get_memories(category, sort_order="desc", filter_metadata=None, n_results=20, include_embeddings=True, unique=False)`
 
 Retrieve a list of memories from a given category, sorted by ID, with optional filtering. `sort_order` controls whether you get from the beginning or end of the list.
 
@@ -272,6 +273,7 @@ sort_order (str): The sorting order of the memories. Can be 'asc' or 'desc'. Def
 filter_metadata (dict): Filter to apply on metadata. Defaults to None.
 n_results (int): The number of results to return. Defaults to 20.
 include_embeddings (bool): Whether to include the embeddings. Defaults to True.
+unique (bool): Whether to return only unique memories. Defaults to False.
 ```
 
 ##### Returns
