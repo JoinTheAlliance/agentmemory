@@ -22,7 +22,7 @@ setup(
     author_email='shawmakesmagic@gmail.com',
     license='MIT',
     packages=['agentmemory'],
-    install_requires=['chromadb'],
+    install_requires=['chromadb', 'rich'],
     readme = "README.md",
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
