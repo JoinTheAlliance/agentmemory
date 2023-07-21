@@ -13,9 +13,7 @@ pip install agentmemory
 # Quickstart
 
 ```python
-from agentmemory import create_memory, search_memory, set_storage_path
-
-set_storage_path('./memory')
+from agentmemory import create_memory, search_memory
 
 # create a memory
 create_memory("conversation", "I can't do that, Dave.", metadata={"speaker": "HAL", "some_other_key": "some value, could be a number or string"})
@@ -381,31 +379,6 @@ Delete all memories across all categories.
 >>> wipe_all_memories()
 ```
 
-## Set a Persistent Storage Path
-
-#### `set_storage_path(path)`
-
-##### Arguments
-
-```
-path (string): the path to save to
-```
-
-##### Example
-
-```python
-    >>> set_storage_path("path/to/persistent/directory")
-```
-
-## Save All Memory to Disk
-
-#### `save_memory()`
-
-##### Example
-
-```python
-    >>> save_memory()
-```
 
 # Memory Management with ChromaDB
 
