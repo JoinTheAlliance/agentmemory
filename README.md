@@ -37,6 +37,14 @@ print(str(memories))
 ]
 ```
 
+# Debugging
+
+You can enable debugging by passing `debug=True` to most functions, or by setting DEBUG=True in your environment to get global memory debugging.
+
+```python
+create_memory("conversation", "I can't do that, Dave.", debug=True)
+```
+
 # Basic Usage Guide
 
 ## Importing into your project
