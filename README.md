@@ -1,4 +1,4 @@
-# agentmemory
+# agentmemory <a href="https://discord.gg/qetWd7J9De"><img style="float: right" src="https://dcbadge.vercel.app/api/server/qetWd7J9De" alt=""></a>
 
 Easy-to-use agent memory, powered by chromadb
 
