@@ -25,7 +25,7 @@ setup(
     install_requires=['chromadb', 'rich'],
     readme = "README.md",
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',  
         'Operating System :: POSIX :: Linux',        
