@@ -17,7 +17,7 @@ setup(
     description='Easy-to-use agent memory, powered by chromadb',
     long_description=long_description,  # added this line
     long_description_content_type="text/markdown",  # and this line
-    url='https://github.com/lalalune/agentmemory',
+    url='https://github.com/AutonomousResearchGroup/agentmemory',
     author='Moon',
     author_email='shawmakesmagic@gmail.com',
     license='MIT',
