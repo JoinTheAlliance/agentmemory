@@ -59,6 +59,7 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
     )
 
     debug_log(f"Created memory {id}: {text}", metadata)
+    return id
 
 
 def create_unique_memory(category, content, metadata={}, similarity=0.95):
@@ -95,6 +96,7 @@ def create_unique_memory(category, content, metadata={}, similarity=0.95):
     metadata["related_to"] = memories[0]["id"]
     metadata["related_document"] = memories[0]["document"]
     create_memory(category, content, metadata=metadata)
+    return id
 
 
 def search_memory(
