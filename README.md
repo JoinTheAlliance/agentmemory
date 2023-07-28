@@ -4,6 +4,9 @@ Easy-to-use agent memory, powered by chromadb
 
 <img src="resources/image.jpg">
 
+[![Lint and Test](https://github.com/AutonomousResearchGroup/agentmemory/actions/workflows/test.yml/badge.svg)](https://github.com/AutonomousResearchGroup/agentmemory/actions/workflows/test.yml)
+[![PyPI version](https://badge.fury.io/py/agentmemory.svg)](https://badge.fury.io/py/agentmemory)
+
 # Installation
 
 ```bash
