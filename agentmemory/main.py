@@ -405,7 +405,7 @@ def delete_memories(category, document=None, metadata=None):
         bool: True if memories are deleted, False otherwise.
 
     Example:
-        >>> delete_memories("books", document="Harry Potter", metadata={"author": "J.K. Rowling"})
+        >>> delete_memories("books", document="Foundation", metadata={"author": "Isaac Asimov"})
     """
     check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
 
