@@ -338,6 +338,33 @@ id (str/int): The ID of the memory.
 >>> delete_memory("books", "1")
 ```
 
+#### `delete_memories(category, document=None, metadata=None)`
+
+Delete all memories in the category either by document, or by metadata, or by both.
+
+##### Arguments
+
+```
+# Required
+category (str): The category of the memory.
+
+# Optional
+document (str): Document text to match memories to delete. Defaults to None.
+metadata (dict): Metadata to match memories to delete. Defaults to None.
+```
+
+##### Returns
+
+```
+bool: True if memories were deleted, False otherwise.
+```
+
+##### Example
+
+```python
+>>> delete_memories("books", document="Harry Potter", metadata={"author": "J.K. Rowling"})
+```
+
 ## Check if a memory exists
 
 #### `memory_exists(category, id, includes_metadata=None)`

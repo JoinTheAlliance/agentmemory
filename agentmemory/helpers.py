@@ -1,26 +1,11 @@
 import json
 import os
 import dotenv
-from rich.panel import Panel
-from rich.console import Console
+from agentlogger import log
 
 dotenv.load_dotenv()
 
-console = Console()
-
 DEBUG = os.getenv("DEBUG", "false") == "true" or os.getenv("DEBUG", "false") == "True"
-
-DEFAULT_TYPE_COLORS = {
-    "unknown": "white",
-    "error": "red",
-    "warning": "yellow",
-    "info": "blue",
-    "prompt": "cyan",
-    "success": "green",
-    "critical": "red",
-    "system": "magenta",
-}
-
 
 def strip_embeddings(value):
     if isinstance(value, dict):
@@ -42,15 +27,11 @@ def debug_log(
     content,
     input_dict=None,
     type="info",
-    color="blue",
-    type_colors=DEFAULT_TYPE_COLORS,
     panel=True,
     debug=DEBUG,
 ):
     if debug is not True:
         return
-
-    color = type_colors.get(type, color)
 
     if input_dict is not None:
         # traverse the dict and find any value called "embedding"
@@ -58,10 +39,7 @@ def debug_log(
         new_dict = strip_embeddings(input_dict.copy())
         content = content + f"\n({json.dumps(new_dict, indent=4)})"
 
-    if panel:
-        console.print(Panel(content, title="agentmemory: " + type, style=color))
-    else:
-        console.print(content, style=color)
+    log(content, title="agentmemory", type=type, panel=panel)
 
 
 def chroma_collection_to_list(collection):

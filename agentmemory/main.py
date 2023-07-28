@@ -109,7 +109,7 @@ def search_memory(
     include_distances=True,
     max_distance=None,  # 0.0 - 1.0
     min_distance=None,  # 0.0 - 1.0
-    unique=False
+    unique=False,
 ):
     """
     Cearch a collection with given query texts.
@@ -243,7 +243,7 @@ def get_memories(
     filter_metadata=None,
     n_results=20,
     include_embeddings=True,
-    unique=False
+    unique=False,
 ):
     """
     Retrieve a list of memories from a given category, sorted by ID, with optional filtering.
@@ -286,7 +286,7 @@ def get_memories(
         ]
 
         filter_metadata = {"$and": filter_metadata}
-    
+
     if unique:
         if filter_metadata is None:
             filter_metadata = {}
@@ -390,6 +390,37 @@ def delete_memory(category, id):
     memories.delete(ids=[str(id)])
 
     debug_log(f"Deleted memory {id} in category {category}")
+
+
+def delete_memories(category, document=None, metadata=None):
+    """
+    Delete all memories in the category either by document, or by metadata, or by both.
+
+    Arguments:
+        category (str): The category of the memories.
+        document (str, optional): The text of the memories to delete. Defaults to None.
+        metadata (dict, optional): The metadata of the memories to delete. Defaults to None.
+
+    Returns:
+        bool: True if memories are deleted, False otherwise.
+
+    Example:
+        >>> delete_memories("books", document="Harry Potter", metadata={"author": "J.K. Rowling"})
+    """
+    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
+
+    # Get or create the collection for the given category
+    memories = get_chroma_client().get_or_create_collection(category)
+
+    # Create a query to match either the document or the metadata
+    if document is not None:
+        memories.delete(where_document={"$contains": document})
+    if metadata is not None:
+        memories.delete(where=metadata)
+
+    debug_log(f"Deleted memories from category {category}")
+
+    return True
 
 
 def delete_similar_memories(category, content, similarity_threshold=0.95):
