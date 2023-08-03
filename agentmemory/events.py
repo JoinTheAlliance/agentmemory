@@ -46,6 +46,9 @@ def get_epoch():
         int: The current epoch value.
     """
     memories = get_memories("epoch")
+    if len(memories) == 0:
+        create_memory("epoch", str(1))
+        return 1
     memory = memories[0]
     return int(memory["document"])
 
