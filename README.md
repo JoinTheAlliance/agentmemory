@@ -362,7 +362,7 @@ bool: True if memories were deleted, False otherwise.
 ##### Example
 
 ```python
->>> delete_memories("books", document="Harry Potter", metadata={"author": "J.K. Rowling"})
+>>> delete_memories("books", document="Foundation", metadata={"author": "Isaac Asimov"})
 ```
 
 ## Check if a memory exists
@@ -518,6 +518,133 @@ The `import_file_to_memory` function imports memories from a JSON file into the 
 
 ```python
 >>> import_file_to_memory(path="/path/to/input.json")
+```
+
+## Event API
+
+A common need for the memory API is "events" -- logging when things happen sequentially. The event API provides a simple way to do this using the idea of "epochs". You can increment epochs as needed, and group events together within epochs. All of the events within a loop, or a conversation turn, for example, could be recorded as an epoch.
+
+## `reset_epoch()`
+
+The `reset_epoch` function resets the epoch in the agent's memory to 1. It wipes the "epoch" category and creates a new memory of 1.
+
+**Usage:**
+
+```python
+reset_epoch()
+```
+
+**Example:**
+
+```python
+reset_epoch()
+```
+
+---
+
+## `set_epoch(epoch)`
+
+The `set_epoch` function sets the epoch in the agent's memory to the specified value.
+
+**Arguments:**
+
+- `epoch` (int): The desired epoch value.
+
+**Usage:**
+
+```python
+set_epoch(epoch)
+```
+
+**Example:**
+
+```python
+set_epoch(5)
+```
+
+---
+
+## `increment_epoch()`
+
+The `increment_epoch` function increments the current epoch value by 1. It retrieves the current epoch from memory, increments it, and then writes the new epoch value to memory.
+
+**Usage:**
+
+```python
+increment_epoch()
+```
+
+**Example:**
+
+```python
+increment_epoch()
+```
+
+---
+
+## `get_epoch()`
+
+The `get_epoch` function retrieves the current epoch value from the agent's memory.
+
+**Usage:**
+
+```python
+get_epoch()
+```
+
+**Example:**
+
+```python
+current_epoch = get_epoch()
+print(current_epoch)
+```
+
+---
+
+## `create_event(text, metadata={}, embedding=None)`
+
+The `create_event` function creates a new event in the agent's memory.
+
+**Arguments:**
+
+- `text` (str): The text content of the event.
+- `metadata` (dict, optional): Additional metadata for the event. Defaults to {}.
+- `embedding` (object, optional): An optional embedding for the event.
+
+**Usage:**
+
+```python
+create_event(text, metadata={}, embedding=None)
+```
+
+**Example:**
+
+```python
+create_event("This is a test event", metadata={"test": "test"})
+```
+
+---
+
+## `get_events(epoch=None)`
+
+The `get_events` function retrieves events from the agent's memory.
+
+**Arguments:**
+
+- `epoch` (int, optional): If specified, only retrieve events from this epoch.
+
+**Usage:**
+
+```python
+get_events(epoch=None)
+```
+
+**Example:**
+
+```python
+events = get_events(1)
+for event in events:
+    print(event["document"])
 ```
 
 # Contributions Welcome
