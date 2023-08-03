@@ -628,7 +628,7 @@ create_event("This is a test event", metadata={"test": "test"})
 
 ---
 
-## `get_events(epoch=None)`
+## `get_events(epoch=None, filter_metadata=None, n_results=10)`
 
 The `get_events` function retrieves events from the agent's memory.
 
