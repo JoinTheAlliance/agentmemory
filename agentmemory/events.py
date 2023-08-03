@@ -68,7 +68,7 @@ def create_event(text, metadata={}, embedding=None):
     return create_memory("events", text, metadata=metadata, embedding=embedding)
 
 
-def get_events(epoch=None):
+def get_events(epoch=None, n_results=10, filter_metadata=None):
     """
     Retrieves events from the agent's memory.
 
@@ -79,5 +79,16 @@ def get_events(epoch=None):
         list: A list of memory objects for the retrieved events.
     """
     if epoch is not None:
-        return get_memories("events", filter_metadata={"epoch": epoch})
-    return get_memories("events")
+        if filter_metadata is None:
+            filter_metadata = {}
+        filter_metadata["epoch"] = epoch
+        return get_memories(
+            "events", filter_metadata=filter_metadata, n_results=n_results
+        )
+    else:
+        if filter_metadata is None:
+            return get_memories("events", n_results=n_results)
+        else:
+            return get_memories(
+                "events", filter_metadata=filter_metadata, n_results=n_results
+            )
