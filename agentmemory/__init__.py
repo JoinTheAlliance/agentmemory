@@ -13,6 +13,15 @@ from .main import (
     wipe_all_memories,
 )
 
+from .events import (
+    create_event,
+    get_epoch,
+    get_events,
+    increment_epoch,
+    reset_epoch,
+    set_epoch,
+)
+
 from .helpers import (
     chroma_collection_to_list,
     list_to_chroma_collection,
@@ -52,4 +61,10 @@ __all__ = [
     "get_chroma_client",
     "set_chroma_client",
     "get_persistent_directory",
+    "create_event",
+    "get_epoch",
+    "get_events",
+    "increment_epoch",
+    "reset_epoch",
+    "set_epoch",
 ]
