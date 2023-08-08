@@ -50,24 +50,29 @@ def chroma_collection_to_list(collection):
     collection (dict): Dictionary to be converted.
 
     Returns:
-    list: Converted list of dictionaries.
+    dict_list: Converted list of dictionaries.
 
     Example:
     >>> chroma_collection_to_list(collection)
     [{'metadata': '...', 'document': '...', 'id': '...'}]
     """
 
-    list = []
+    dict_list = []
 
+
+    # check if collection is a list
+    if isinstance(collection, list):
+        return collection
+    
     # If there are no embeddings, zip metadatas, documents and ids together
     if collection.get("embeddings", None) is None:
         for metadata, document, id in zip(
             collection["metadatas"], collection["documents"], collection["ids"]
         ):
             # append the zipped data as dictionary to the list
-            list.append({"metadata": metadata, "document": document, "id": id})
+            dict_list.append({"metadata": metadata, "document": document, "id": id})
 
-        return list
+        return dict_list
 
     # if distance is none, zip metadatas, documents, ids and embeddings together
     if collection.get("distances", None) is None:
@@ -78,7 +83,7 @@ def chroma_collection_to_list(collection):
             collection["embeddings"],
         ):
             # append the zipped data as dictionary to the list
-            list.append(
+            dict_list.append(
                 {
                     "metadata": metadata,
                     "document": document,
@@ -87,7 +92,7 @@ def chroma_collection_to_list(collection):
                 }
             )
 
-        return list
+        return dict_list
 
     # if embeddings are present, zip all data including embeddings and distances
     for metadata, document, id, embedding, distance in zip(
@@ -98,7 +103,7 @@ def chroma_collection_to_list(collection):
         collection.get("distances"),
     ):
         # append the zipped data as dictionary to the list
-        list.append(
+        dict_list.append(
             {
                 "metadata": metadata,
                 "document": document,
@@ -107,8 +112,8 @@ def chroma_collection_to_list(collection):
                 "id": id,
             }
         )
-    debug_log("Collection to list", {"collection": collection, "list": list})
-    return list
+    debug_log("Collection to list", {"collection": collection, "list": dict_list})
+    return dict_list
 
 
 def list_to_chroma_collection(list):

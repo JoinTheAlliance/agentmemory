@@ -1,2 +1,5 @@
 chromadb
 agentlogger
+psycopg2-binary
+sentence_transformers
+python-dotenv

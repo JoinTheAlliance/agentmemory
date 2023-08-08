@@ -28,6 +28,9 @@ def test_memory_creation_and_retrieval():
     # assert length of memories is 10
     assert len(memories) == 10
 
+    print('******** memories[0]')
+    print(memories[0])
+
     # assert that the first memory is document 19
     assert memories[0]["document"] == "document 19"
     wipe_category("test")

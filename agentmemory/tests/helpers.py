@@ -5,7 +5,7 @@ import pytest
 from agentmemory import (
     chroma_collection_to_list,
     create_memory,
-    get_chroma_client,
+    get_client,
     list_to_chroma_collection,
     wipe_all_memories,
 )
@@ -17,16 +17,12 @@ from agentmemory.persistence import (
     import_json_to_memory,
 )
 
-from agentmemory.client import set_chroma_client
-
 
 def test_chroma_collection_conversion():
-    # chroma_collection_to_list
-    set_chroma_client("./memory")
     wipe_all_memories()
     create_memory("test", "document 1", metadata={"test": "test"})
     create_memory("test", "document 2", metadata={"test": "test"})
-    collection = get_chroma_client().get_or_create_collection("test")
+    collection = get_client().get_or_create_collection("test")
     test_collection_data = collection.peek()
     list_data = chroma_collection_to_list(test_collection_data)
 
@@ -52,9 +48,8 @@ def test_chroma_collection_conversion():
 
 
 def test_get_chroma_client():
-    set_chroma_client("./memory")
     wipe_all_memories()
-    client = get_chroma_client()
+    client = get_client()
     assert client is not None, "Client should not be None"
 
 
@@ -141,14 +136,14 @@ def test_export_memory_to_file():
 def test_import_json_to_memory():
     # Test with empty dictionary
     import_json_to_memory(data={})
-    collections = get_chroma_client().list_collections()
+    collections = get_client().list_collections()
     assert len(collections) == 0, "No collections should exist"
 
     # Test with replace=False
     create_memory("test", "document 1")
     data = export_memory_to_json()
     import_json_to_memory(data, replace=False)
-    collections = get_chroma_client().list_collections()
+    collections = get_client().list_collections()
     assert len(collections) == 1, "Only one collection should exist"
 
     # Test with invalid data
@@ -161,12 +156,12 @@ def test_import_file_to_memory():
     # Test with default parameters
     export_memory_to_file()
     import_file_to_memory()
-    assert get_chroma_client().list_collections(), "Collections should exist"
+    assert get_client().list_collections(), "Collections should exist"
 
     # Test with specified path
     export_memory_to_file(path="./test_memory.json")
     import_file_to_memory(path="./test_memory.json")
-    assert get_chroma_client().list_collections(), "Collections should exist"
+    assert get_client().list_collections(), "Collections should exist"
 
     # Test with invalid path
     with pytest.raises(Exception):

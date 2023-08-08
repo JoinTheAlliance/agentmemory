@@ -4,7 +4,7 @@ from agentmemory import (
     get_memories,
     wipe_all_memories,
 )
-from agentmemory.client import get_chroma_client
+from agentmemory.client import get_client
 
 
 def export_memory_to_json(include_embeddings=True):
@@ -22,7 +22,7 @@ def export_memory_to_json(include_embeddings=True):
         >>> export_memory_to_json()
     """
 
-    collections = get_chroma_client().list_collections()
+    collections = get_client().list_collections()
 
     collections_dict = {}
 

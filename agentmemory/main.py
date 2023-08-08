@@ -8,7 +8,7 @@ from agentmemory.helpers import (
 )
 
 
-from agentmemory.client import get_chroma_client, check_client_initialized
+from agentmemory.client import get_client
 
 
 def create_memory(category, text, metadata={}, embedding=None, id=None):
@@ -28,10 +28,8 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
     >>> create_memory('sample_category', 'sample_text', id='sample_id', metadata={'sample_key': 'sample_value'})
     """
 
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-
     # get or create the collection
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     # add timestamps to metadata
     metadata["created_at"] = datetime.datetime.now().timestamp()
@@ -136,14 +134,12 @@ def search_memory(
     [{'metadata': '...', 'document': '...', 'id': '...'}, {'metadata': '...', 'document': '...', 'id': '...'}]
     """
 
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-
     # check if contains_text is provided and format it for the query
     if contains_text is not None:
         contains_text = {"$contains": contains_text}
 
     # get or create the collection
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     if (memories.count()) == 0:
         return []
@@ -209,10 +205,9 @@ def get_memory(category, id, include_embeddings=True):
     Example:
         >>> get_memory("books", "1")
     """
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
 
     # Get or create the collection for the given category
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     # Get the types to include based on the function parameters
     include_types = get_include_types(include_embeddings, False)
@@ -220,8 +215,10 @@ def get_memory(category, id, include_embeddings=True):
     # Retrieve the memory with the given ID
     memory = memories.get(ids=[str(id)], limit=1, include=include_types)
 
-    # Convert the collection to list format
-    memory = chroma_collection_to_list(memory)
+    # if memory is not a list
+    if not isinstance(memory, list):
+        # Convert the collection to list format
+        memory = chroma_collection_to_list(memory)
 
     debug_log(f"Got memory {id} from category {category}", memory)
 
@@ -262,10 +259,9 @@ def get_memories(
     Example:
         >>> get_memories("books", sort_order="asc", n_results=10)
     """
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
 
     # Get or create the collection for the given category
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     # min n_results to prevent searching for more elements than are available
     n_results = min(n_results, memories.count())
@@ -297,8 +293,12 @@ def get_memories(
         where=filter_metadata, where_document=where_document, include=include_types
     )
 
-    # Convert the collection to list format
-    memories = chroma_collection_to_list(memories)
+    if not isinstance(memories, list):
+        # Convert the collection to list format
+        memories = chroma_collection_to_list(memories)
+
+    print('memories')
+    print(memories)
 
     # Sort memories by ID. If sort_order is 'desc', then the reverse parameter will be True, and memories will be sorted in descending order.
     memories.sort(key=lambda x: x["id"], reverse=sort_order == "desc")
@@ -331,10 +331,8 @@ def update_memory(category, id, text=None, metadata=None):
         >>> update_memory("books", "1", text="New text", metadata={"author": "New author"})
     """
 
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-
     # Get or create the collection for the given category
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     # If neither text nor metadata is provided, raise an exception
     if metadata is None and text is None:
@@ -375,10 +373,8 @@ def delete_memory(category, id):
         >>> delete_memory("books", "1")
     """
 
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-
     # Get or create the collection for the given category
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     if memory_exists(category, id) is False:
         debug_log(
@@ -407,10 +403,9 @@ def delete_memories(category, document=None, metadata=None):
     Example:
         >>> delete_memories("books", document="Foundation", metadata={"author": "Isaac Asimov"})
     """
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
 
     # Get or create the collection for the given category
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     # Create a query to match either the document or the metadata
     if document is not None:
@@ -477,10 +472,8 @@ def memory_exists(category, id, includes_metadata=None):
         >>> memory_exists("books", "1")
     """
 
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-
     # Get or create the collection for the given category
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     # Check if there's a memory with the given ID and metadata
     memory = memories.get(ids=[str(id)], where=includes_metadata, limit=1)
@@ -509,10 +502,8 @@ def count_memories(category, unique=False):
         >>> count_memories("books")
     """
 
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-
     # Get or create the collection for the given category
-    memories = get_chroma_client().get_or_create_collection(category)
+    memories = get_client().get_or_create_collection(category)
 
     if unique:
         memories = memories.get(where={"unique": "True"})
@@ -537,7 +528,7 @@ def wipe_category(category):
     collection = None
 
     try:
-        collection = get_chroma_client().get_collection(
+        collection = get_client().get_collection(
             category
         )  # Check if the category exists
     except Exception:
@@ -548,7 +539,7 @@ def wipe_category(category):
 
     if collection is not None:
         # Delete the entire category
-        get_chroma_client().delete_collection(category)
+        get_client().delete_collection(category)
 
 
 def wipe_all_memories():
@@ -558,9 +549,7 @@ def wipe_all_memories():
     Example:
         >>> wipe_all_memories()
     """
-
-    check_client_initialized()  # client is lazy loaded, so make sure it is is initialized
-    client = get_chroma_client()
+    client = get_client()
     collections = client.list_collections()
 
     # Iterate over all collections

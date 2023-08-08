@@ -9,11 +9,9 @@ from agentmemory import (
     import_json_to_memory,
     wipe_all_memories,
 )
-from agentmemory.client import set_chroma_client
 
 
 def test_memory_export_import():
-    set_chroma_client("./memory")
     wipe_all_memories()
     create_memory("test", "not document 1", metadata={"test": "test"})
     export_memory_to_file("./test_memories.json")
@@ -25,7 +23,6 @@ def test_memory_export_import():
 
 
 def test_export_memory_to_json():
-    set_chroma_client("./memory")
     create_memory("test", "document 1", metadata={"test": "test"})
     export_dict = export_memory_to_json()
     assert "test" in export_dict
@@ -33,7 +30,6 @@ def test_export_memory_to_json():
 
 
 def test_import_json_to_memory():
-    set_chroma_client("./memory")
     data = {
         "test": [{"document": "document 1", "metadata": {"test": "test"}, "id": "1"}]
     }
@@ -43,7 +39,6 @@ def test_import_json_to_memory():
 
 
 def test_import_file_to_memory():
-    set_chroma_client("./memory")
     create_memory("test", "document 1", metadata={"test": "test"})
     export_memory_to_file("./test_memories.json")
     # Wipe out all memories
