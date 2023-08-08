@@ -650,6 +650,61 @@ for event in events:
     print(event["document"])
 ```
 
+# Clustering
+
+## Overview
+
+The `cluster` function in `agentmemory.clustering` provides an implementation of DBScan (Density-Based Spatial Clustering of Applications with Noise) clustering. It is designed to group memories in the agent's memory based on their similarity and proximity in the data space.
+
+## Function Signature
+
+```python
+def cluster(epsilon, min_samples, category, filter_metadata=None, unique=False)
+```
+
+## Parameters
+
+- `epsilon` (float): The maximum distance between two samples for one to be considered as in the neighborhood of the other.
+- `min_samples` (int): The number of samples (or total weight) in a neighborhood for a point to be considered as a core point.
+- `category` (str): The category of the collection to be clustered.
+- `filter_metadata` (dict, optional): Additional metadata for filtering the memories before clustering. Defaults to None.
+- `unique` (bool, optional): Whether to return only unique memories. Defaults to False.
+
+## Memory Clustering
+
+The `cluster` function updates memories directly with their cluster ID by performing the DBScan clustering algorithm. Memories with similar content and metadata will be grouped together into clusters. The clustering result will be reflected in the metadata of the memories.
+
+## Memory Marking
+
+- Memories with less than `min_samples` neighbors within a distance of `epsilon` will be marked as noise, and their cluster ID in the metadata will be set to "noise."
+- Memories belonging to a cluster will have their cluster ID stored in the "cluster" field of the metadata.
+
+## Usage
+
+To perform clustering on a specific category of memories, call the `cluster` function with appropriate parameters:
+
+```python
+from agentmemory.clustering import cluster
+
+# Example usage
+epsilon = 0.1
+min_samples = 3
+category = "conversation"
+filter_metadata = {"speaker": "HAL"}  # Optional metadata filter
+unique = False  # Whether to return only unique memories
+
+cluster(epsilon, min_samples, category, filter_metadata=filter_metadata, unique=unique)
+```
+
+## Note
+
+- The clustering operation will directly update the memories' metadata in the specified category. Please make sure to have a backup of the data before performing clustering if necessary.
+
+## References
+
+For more information about DBScan clustering, refer to the original paper:
+[DBScan Paper](https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf)
+
 # Contributions Welcome
 
 If you like this library and want to contribute in any way, please feel free to submit a PR and I will review it. Please note that the goal here is simplicity and accesibility, using common language and few dependencies.

@@ -39,6 +39,10 @@ from .client import (
     set_chroma_client,
 )
 
+from .clustering import (
+    cluster,
+)
+
 __all__ = [
     "create_memory",
     "create_unique_memory",
@@ -67,4 +71,5 @@ __all__ = [
     "increment_epoch",
     "reset_epoch",
     "set_epoch",
+    "cluster",
 ]
