@@ -28,9 +28,6 @@ def test_memory_creation_and_retrieval():
     # assert length of memories is 10
     assert len(memories) == 10
 
-    print('******** memories[0]')
-    print(memories[0])
-
     # assert that the first memory is document 19
     assert memories[0]["document"] == "document 19"
     wipe_category("test")
@@ -41,6 +38,7 @@ def test_memory_deletion():
     # Delete memory test
     create_memory("test", "delete memory test", metadata={"test": "test"})
     memories = get_memories("test")
+    print('memories', memories)
     memory_id = memories[0]["id"]
     num_memories = count_memories("test")
     # test delete_memory
@@ -84,6 +82,10 @@ def test_search_memory():
 
 def test_wipe_category():
     # test wipe_category
+    wipe_category("test")
+    for i in range(3):
+        create_memory("test", "document " + str(i + 1), metadata={"test": "test"})
+    assert count_memories("test") == 3
     wipe_category("test")
     assert count_memories("test") == 0
 

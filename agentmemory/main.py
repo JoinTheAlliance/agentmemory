@@ -215,10 +215,8 @@ def get_memory(category, id, include_embeddings=True):
     # Retrieve the memory with the given ID
     memory = memories.get(ids=[str(id)], limit=1, include=include_types)
 
-    # if memory is not a list
-    if not isinstance(memory, list):
-        # Convert the collection to list format
-        memory = chroma_collection_to_list(memory)
+
+    memory = chroma_collection_to_list(memory)
 
     debug_log(f"Got memory {id} from category {category}", memory)
 
@@ -311,7 +309,7 @@ def get_memories(
     return memories
 
 
-def update_memory(category, id, text=None, metadata=None):
+def update_memory(category, id, text=None, metadata=None, embedding=None):
     """
     Update a memory with new text and/or metadata.
 
@@ -348,9 +346,10 @@ def update_memory(category, id, text=None, metadata=None):
 
     documents = [text] if text is not None else None
     metadatas = [metadata] if metadata is not None else None
+    embeddings = [embedding] if embedding is not None else None
 
     # Update the memory with the new text and/or metadata
-    memories.update(ids=[str(id)], documents=documents, metadatas=metadatas)
+    memories.update(ids=[str(id)], documents=documents, metadatas=metadatas, embeddings=embeddings)
 
     debug_log(
         f"Updated memory {id} in category {category}",
@@ -540,7 +539,6 @@ def wipe_category(category):
     if collection is not None:
         # Delete the entire category
         get_client().delete_collection(category)
-
 
 def wipe_all_memories():
     """

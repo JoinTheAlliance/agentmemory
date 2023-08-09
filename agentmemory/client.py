@@ -19,6 +19,9 @@ client = None
 
 def get_client(client_type=None, *args, **kwargs):
     global client
+    if client is not None:
+        return client
+
     if client_type is None:
         client_type = CLIENT_TYPE
 
@@ -27,13 +30,11 @@ def get_client(client_type=None, *args, **kwargs):
             raise EnvironmentError(
                 "Postgres connection string not set in environment variables!"
             )
-        if client is None:
-            client = PostgresClient(POSTGRES_CONNECTION_STRING)
-        return client
+        client = PostgresClient(POSTGRES_CONNECTION_STRING)
     else:
-        if client is None:
-            client = chromadb.PersistentClient(path=STORAGE_PATH, *args, **kwargs)
-        return client
+        client = chromadb.PersistentClient(path=STORAGE_PATH, *args, **kwargs)
+
+    return client
 
 
 class PostgresCollection:
@@ -64,13 +65,32 @@ class PostgresCollection:
         where_document=None,
         include=["metadatas", "documents"],
     ):
-        query = f"SELECT * FROM memories WHERE category=%s LIMIT %s OFFSET %s"
-        self.client.cur.execute(query, (self.category, limit, offset))
+        if ids:
+            if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
+                raise Exception("ids must be a list of integers or strings representing integers")
+        
+            # Map ids to integers
+            ids_array = ",".join(map(str, [int(i) for i in ids]))
+
+            # Adjusting the query to cast the entire ARRAY after it's constructed
+            query = f"SELECT * FROM memories WHERE category=%s AND id=ANY(ARRAY[{ids_array}]::integer[]) LIMIT %s OFFSET %s"
+            self.client.cur.execute(query, (self.category, limit, offset))
+
+        else:
+            query = f"SELECT * FROM memories WHERE category=%s LIMIT %s OFFSET %s"
+            self.client.cur.execute(query, (self.category, limit, offset))
         rows = self.client.cur.fetchall()
         
         # Convert rows to list of dictionaries
         columns = [desc[0] for desc in self.client.cur.description]
-        return [dict(zip(columns, row)) for row in rows]
+        result = [dict(zip(columns, row)) for row in rows]
+
+        return {
+            "ids": [row["id"] for row in result],
+            "documents": [row["document"] for row in result],
+            "metadatas": [row["metadata"] for row in result],
+        }
+
 
 
     def peek(self, limit=10):
@@ -87,26 +107,34 @@ class PostgresCollection:
     ):
         return self.client.query(self.category, query_texts, n_results)
 
-    def update(self, ids, embeddings=None, metadatas=None, documents=None):
-        for id_, doc, meta, emb in zip(ids, documents, metadatas, embeddings):
-            self.client.update(self.category, id_, doc, meta)
+    def update(self, ids, documents=None, metadatas=None, embeddings=None):
+        # if embeddings is not None
+        if embeddings is None:
+            for id_, doc, meta in zip(ids, documents, metadatas):
+                self.client.update(self.category, id_, doc, meta)
+        else:
+            for id_, doc, meta, emb in zip(ids, documents, metadatas, embeddings):
+                self.client.update(self.category, id_, doc, meta, emb)
 
     def upsert(self, ids, embeddings=None, metadatas=None, documents=None):
         self.add(ids, embeddings, metadatas, documents)
 
     def delete(self, ids=None, where=None, where_document=None):
-        query = "DELETE FROM memories WHERE category=%s AND id=ANY(%s)"
+        ids = [int(i) for i in ids]
+        query = "DELETE FROM memories WHERE category=%s AND id=ANY(%s::int[])"
         self.client.cur.execute(query, (self.category, ids))
-        self.client.conn.commit()
+        self.client.connection.commit()
+
 
 class PostgresCategory:
     def __init__(self, name):
         self.name = name
 
+
 class PostgresClient:
     def __init__(self, connection_string):
-        self.conn = psycopg2.connect(connection_string)
-        self.cur = self.conn.cursor()
+        self.connection = psycopg2.connect(connection_string)
+        self.cur = self.connection.cursor()
         from pgvector.psycopg2 import register_vector
 
         register_vector(self.cur)  # Register PGVector functions
@@ -115,13 +143,16 @@ class PostgresClient:
 
     def list_collections(self):
         self.cur.execute("SELECT DISTINCT category FROM memories")
-        # return a collection object with the key 'name' with the value category for each row (collection.name)
         return [PostgresCategory(row) for row in self.cur.fetchall()]
-    
+
+    def get_collection(self, category):
+        return PostgresCollection(category, self)
+
     def delete_collection(self, category):
+        print("deleting collection", category)
         self.cur.execute("DELETE FROM memories WHERE category=%s", (category,))
-        self.conn.commit()
-        
+        self.connection.commit()
+
     def _create_memories_table(self):
         self.cur.execute(
             """
@@ -134,19 +165,22 @@ class PostgresClient:
         )
         """
         )
-        self.conn.commit()
+        self.connection.commit()
 
     def get_or_create_collection(self, category):
         return PostgresCollection(category, self)
 
     def insert_memory(self, category, document, metadata={}, embedding=None):
         metadata_string = json.dumps(metadata)  # Convert the dict to a JSON string
+        if embedding is None:
+            embedding = self.create_embedding(document)
+
         query = """
         INSERT INTO memories (category, document, metadata, embedding) VALUES (%s, %s, %s, %s)
         RETURNING id;
         """
         self.cur.execute(query, (category, document, metadata_string, embedding))
-        self.conn.commit()
+        self.connection.commit()
         return self.cur.fetchone()[0]
 
     def create_embedding(self, document):
@@ -157,11 +191,11 @@ class PostgresClient:
             for doc, meta, id_ in zip(documents, metadatas, ids):
                 embedding = self.create_embedding(doc)
                 cur.execute(
-                    f"""
-                    INSERT INTO {category} (id, document, metadata, embedding)
-                    VALUES (%s, %s, %s, %s)
+                    """
+                    INSERT INTO memories (id, category, document, metadata, embedding)
+                    VALUES (%s, %s %s, %s, %s)
                 """,
-                    (id_, doc, meta, embedding),
+                    (id_, category, doc, meta, embedding),
                 )
             self.connection.commit()
 
@@ -173,34 +207,42 @@ class PostgresClient:
                 cur.execute(
                     f"""
                     SELECT id, document, metadata, embedding <-> %s AS distance
-                    FROM {category}
-                    WHERE embedding <@- %s
+                    FROM memories
+                    WHERE category = %s
                     ORDER BY embedding <-> %s
                     LIMIT %s
                 """,
-                    (emb, emb, emb, n_results),
+                    (emb, category, emb, n_results),
                 )
                 results.extend(cur.fetchall())
         return results
 
-    def update(self, category, id_, document=None, metadata=None):
+    def update(self, category, id_, document=None, metadata=None, embedding=None):
         with self.connection.cursor() as cur:
             if document:
-                embedding = self.create_embedding(document)
+                print("updating document")
+                print(document)
+                print(metadata)
+                # if metadata is a dict, convert it to a JSON string
+                if isinstance(metadata, dict):
+                    metadata = json.dumps(metadata)
+                print(id_)
+                if embedding is None:
+                    embedding = self.create_embedding(document)
                 cur.execute(
                     f"""
-                    UPDATE {category}
+                    UPDATE memories
                     SET document=%s, embedding=%s, metadata=%s
-                    WHERE id=%s
+                    WHERE id=%s AND category='{category}'
                 """,
                     (document, embedding, metadata, id_),
                 )
             else:
                 cur.execute(
                     f"""
-                    UPDATE {category}
+                    UPDATE memories
                     SET metadata=%s
-                    WHERE id=%s
+                    WHERE id=%s AND category='{category}'
                 """,
                     (metadata, id_),
                 )
@@ -208,4 +250,4 @@ class PostgresClient:
 
     def close(self):
         self.cur.close()
-        self.conn.close()
+        self.connection.close()
