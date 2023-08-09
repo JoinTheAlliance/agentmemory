@@ -210,7 +210,6 @@ class PostgresClient:
         return PostgresCollection(category, self)
 
     def delete_collection(self, category):
-        print("deleting collection", category)
         table_name = self._table_name(category)
         self.cur.execute(f"DROP TABLE IF EXISTS {table_name}")
         self.connection.commit()
@@ -240,7 +239,7 @@ class PostgresClient:
         return self.cur.fetchone()[0]
 
     def create_embedding(self, document):
-        return self.model.encode(document)
+        return self.model.encode(document, normalize_embeddings=True)
 
     def add(self, category, documents, metadatas, ids):
         self.ensure_table_exists(category)
@@ -260,35 +259,44 @@ class PostgresClient:
 
     def query(self, category, query_texts, n_results=5):
         embeddings = [self.create_embedding(q) for q in query_texts]
-        results = []
+        results = {
+            "ids": [],
+            "documents": [],
+            "metadatas": [],
+            "embeddings": [],
+            "distances": []
+        }
         self.ensure_table_exists(category)
         table_name = self._table_name(category)
         with self.connection.cursor() as cur:
             for emb in embeddings:
                 cur.execute(
                     f"""
-                    SELECT id, document, metadata, embedding <-> %s AS distance
+                    SELECT id, document, metadata, embedding, embedding <-> %s AS distance
                     FROM {table_name}
                     ORDER BY embedding <-> %s
                     LIMIT %s
                 """,
                     (emb, emb, n_results),
                 )
-                results.extend(cur.fetchall())
+                rows = cur.fetchall()
+                for row in rows:
+                    results["ids"].append(row[0])
+                    results["documents"].append(row[1])
+                    results["metadatas"].append(row[2])
+                    results["embeddings"].append(row[3])
+                    results["distances"].append(row[4])
         return results
+
 
     def update(self, category, id_, document=None, metadata=None, embedding=None):
         self.ensure_table_exists(category)
         table_name = self._table_name(category)
         with self.connection.cursor() as cur:
             if document:
-                print("updating document")
-                print(document)
-                print(metadata)
                 # if metadata is a dict, convert it to a JSON string
                 if isinstance(metadata, dict):
                     metadata = json.dumps(metadata)
-                print(id_)
                 if embedding is None:
                     embedding = self.create_embedding(document)
                 cur.execute(

@@ -39,7 +39,6 @@ def test_memory_deletion():
     # Delete memory test
     create_memory("test", "delete memory test", metadata={"test": "test"})
     memories = get_memories("test")
-    print('memories', memories)
     memory_id = memories[0]["id"]
     num_memories = count_memories("test")
     # test delete_memory
@@ -118,6 +117,12 @@ def test_delete_memories():
     wipe_category("books")
     
 
+def test_wipe_all_memories():
+    create_memory("test", "test document")
+    wipe_all_memories()
+    assert count_memories("test") == 0
+
+
 def test_memory_search_distance():
     wipe_category("test")
     create_memory("test", "cinammon duck cakes")
@@ -126,28 +131,6 @@ def test_memory_search_distance():
     )
 
     assert len(max_dist_limited_memories) == 1
-    wipe_category("test")
-
-
-def test_wipe_all_memories():
-    create_memory("test", "test document")
-    wipe_all_memories()
-    assert count_memories("test") == 0
-
-
-def test_create_unique_memory():
-    wipe_category("test")
-    # Test creating a unique memory
-    create_unique_memory("test", "unique_memory_1")
-    memories = get_memories("test")
-    assert len(memories) == 1
-    assert memories[0]["metadata"]["unique"] == "True"
-
-    # Test creating a non-unique memory similar to the existing one
-    create_unique_memory("test", "unique_memory_1s")
-    memories = get_memories("test")
-    assert len(memories) == 2
-    assert memories[0]["metadata"]["unique"] == "False"
     wipe_category("test")
 
 
@@ -171,4 +154,26 @@ def test_delete_similar_memories():
     assert delete_similar_memories("test", "not_similar_memory") is False
     memories = get_memories("test")
     assert len(memories) == 1
+    wipe_category("test")
+
+
+def test_create_unique_memory():
+    wipe_category("test")
+    # Test creating a novel memory
+    create_unique_memory("test", "unique_memory_1", similarity=0.1)
+    memories = get_memories("test")
+    assert len(memories) == 1
+    assert memories[0]["metadata"]["novel"] == "True"
+
+    # Test creating a non-novel memory similar to the existing one
+    create_unique_memory("test", "unique_memory_1", similarity=0.1)
+    memories = get_memories("test")
+    assert len(memories) == 2
+    assert memories[0]["metadata"]["novel"] == "False"
+
+    # Test creating a non-novel memory similar to the existing one
+    create_unique_memory("test", "common_object_a", similarity=0.9)
+    memories = get_memories("test")
+    assert len(memories) == 3
+    assert memories[0]["metadata"]["novel"] == "True"
     wipe_category("test")

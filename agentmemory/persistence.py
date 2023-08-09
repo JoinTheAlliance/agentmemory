@@ -28,11 +28,7 @@ def export_memory_to_json(include_embeddings=True):
 
     # Iterate over all collections
     for collection in collections:
-        print(collection)
         collection_name = collection.name
-        print("collection_name")
-        print(collection_name)
-
         collections_dict[collection_name] = []
 
         # Get all memories from the current collection

@@ -182,7 +182,13 @@ def flatten_arrays(collection):
         # If no values, continue to next iteration
         if collection[key] is None:
             continue
-        # Flatten the arrays into a single array for each key
+
+        if not isinstance(collection[key], list):
+            continue
+
+        if not any(isinstance(el, list) for el in collection[key]):
+            continue
+
         collection[key] = [item for sublist in collection[key] for item in sublist]
 
     return collection
