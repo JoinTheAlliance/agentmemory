@@ -35,8 +35,7 @@ from .persistence import (
 )
 
 from .client import (
-    get_chroma_client,
-    set_chroma_client,
+    get_client,
 )
 
 from .clustering import (
@@ -62,8 +61,7 @@ __all__ = [
     "export_memory_to_file",
     "import_json_to_memory",
     "import_file_to_memory",
-    "get_chroma_client",
-    "set_chroma_client",
+    "get_client",
     "get_persistent_directory",
     "create_event",
     "get_epoch",

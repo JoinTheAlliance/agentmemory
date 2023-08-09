@@ -1,55 +1,39 @@
+import os
+import json
+
 import chromadb
+import psycopg2
+from sentence_transformers import SentenceTransformer
+from dotenv import load_dotenv
 
-from agentmemory.helpers import debug_log
+from agentmemory.postgres import PostgresClient
 
-storage_path = "./memory"
-client = chromadb.PersistentClient(storage_path)
-
-
-def check_client_initialized():
-    """
-    Check if the client has been initialized, and initialize it if not.
-
-    Example:
-        >>> check_client_initialized()
-    """
-    if get_chroma_client() is None:
-        set_chroma_client(chromadb.PersistentClient(storage_path))
+load_dotenv()
 
 
-def get_chroma_client():
-    """
-    Get the chromadb client.
+DEFAULT_CLIENT_TYPE = "CHROMA"
+CLIENT_TYPE = os.environ.get("CLIENT_TYPE", DEFAULT_CLIENT_TYPE)
+STORAGE_PATH = os.environ.get("STORAGE_PATH", "./memory")
+POSTGRES_CONNECTION_STRING = os.environ.get("POSTGRES_CONNECTION_STRING")
 
-    Returns:
-        chromadb.Client: Chromadb client.
+client = None
 
-    Example:
-        >>> get_chroma_client()
-        <chromadb.client.Client object at 0x7f7b9c2f0d00>
-    """
+
+def get_client(client_type=None, *args, **kwargs):
     global client
-    global storage_path
-    if client is None:
-        client = chromadb.PersistentClient(path=storage_path)
+    if client is not None:
+        return client
+
+    if client_type is None:
+        client_type = CLIENT_TYPE
+
+    if client_type == "POSTGRES":
+        if POSTGRES_CONNECTION_STRING is None:
+            raise EnvironmentError(
+                "Postgres connection string not set in environment variables!"
+            )
+        client = PostgresClient(POSTGRES_CONNECTION_STRING)
+    else:
+        client = chromadb.PersistentClient(path=STORAGE_PATH, *args, **kwargs)
+
     return client
-
-
-def set_chroma_client(data_storage_path=storage_path):
-    """
-    Set the chromadb client.
-
-    Args:
-        storage_path (string): The path to the new directory.
-
-    Returns:
-        None
-
-    Example:
-        >>> set_chroma_client(new_client)
-    """
-    global client
-    global storage_path
-    storage_path = data_storage_path
-    client = chromadb.PersistentClient(storage_path)
-    debug_log("Set chroma client", {"storage_path": storage_path}, "system")

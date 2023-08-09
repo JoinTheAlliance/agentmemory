@@ -1,3 +1,4 @@
+import time
 from agentmemory import (
     search_memory,
     get_memory,
@@ -82,6 +83,10 @@ def test_search_memory():
 def test_wipe_category():
     # test wipe_category
     wipe_category("test")
+    for i in range(3):
+        create_memory("test", "document " + str(i + 1), metadata={"test": "test"})
+    assert count_memories("test") == 3
+    wipe_category("test")
     assert count_memories("test") == 0
 
 
@@ -93,6 +98,31 @@ def test_count_memories():
     wipe_category("test")
 
 
+def test_delete_memories():
+    wipe_category("books")
+    # create a memory to be deleted
+    create_memory("books", "Foundation", metadata={"author": "Isaac Asimov"}, id="1")
+    create_memory("books", "Foundation and Empire", metadata={"author": "Isaac Asimov"}, id="2")
+    create_memory("books", "Second Foundation", metadata={"author": "Isaac Asimov"}, id="3")
+
+    # assert the memory exists
+    assert get_memory("books", "1") is not None
+
+    # delete the memory
+    assert delete_memories("books", "Foundation")
+    assert delete_memories("books", metadata={"author": "Isaac Asimov"})
+
+    # assert the memory does not exist anymore
+    assert get_memory("books", "1") is None
+    wipe_category("books")
+    
+
+def test_wipe_all_memories():
+    create_memory("test", "test document")
+    wipe_all_memories()
+    assert count_memories("test") == 0
+
+
 def test_memory_search_distance():
     wipe_category("test")
     create_memory("test", "cinammon duck cakes")
@@ -101,28 +131,6 @@ def test_memory_search_distance():
     )
 
     assert len(max_dist_limited_memories) == 1
-    wipe_category("test")
-
-
-def test_wipe_all_memories():
-    create_memory("test", "test document")
-    wipe_all_memories()
-    assert count_memories("test") == 0
-
-
-def test_create_unique_memory():
-    wipe_category("test")
-    # Test creating a unique memory
-    create_unique_memory("test", "unique_memory_1")
-    memories = get_memories("test")
-    assert len(memories) == 1
-    assert memories[0]["metadata"]["unique"] == "True"
-
-    # Test creating a non-unique memory similar to the existing one
-    create_unique_memory("test", "unique_memory_1s")
-    memories = get_memories("test")
-    assert len(memories) == 2
-    assert memories[0]["metadata"]["unique"] == "False"
     wipe_category("test")
 
 
@@ -149,20 +157,23 @@ def test_delete_similar_memories():
     wipe_category("test")
 
 
-def test_delete_memories():
-    wipe_category("books")
-    # create a memory to be deleted
-    create_memory("books", "Foundation", metadata={"author": "Isaac Asimov"}, id="1")
-    create_memory("books", "Foundation and Empire", metadata={"author": "Isaac Asimov"}, id="2")
-    create_memory("books", "Second Foundation", metadata={"author": "Isaac Asimov"}, id="3")
+def test_create_unique_memory():
+    wipe_category("test")
+    # Test creating a novel memory
+    create_unique_memory("test", "unique_memory_1", similarity=0.1)
+    memories = get_memories("test")
+    assert len(memories) == 1
+    assert memories[0]["metadata"]["novel"] == "True"
 
-    # assert the memory exists
-    assert get_memory("books", "1") is not None
+    # Test creating a non-novel memory similar to the existing one
+    create_unique_memory("test", "unique_memory_1", similarity=0.1)
+    memories = get_memories("test")
+    assert len(memories) == 2
+    assert memories[0]["metadata"]["novel"] == "False"
 
-    # delete the memory
-    assert delete_memories("books", "Foundation")
-    assert delete_memories("books", metadata={"author": "Isaac Asimov"})
-
-    # assert the memory does not exist anymore
-    assert get_memory("books", "1") is None
-    wipe_category("books")
+    # Test creating a non-novel memory similar to the existing one
+    create_unique_memory("test", "common_object_a", similarity=0.9)
+    memories = get_memories("test")
+    assert len(memories) == 3
+    assert memories[0]["metadata"]["novel"] == "True"
+    wipe_category("test")

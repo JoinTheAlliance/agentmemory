@@ -1,11 +1,11 @@
 from agentmemory import search_memory, update_memory
 
-def cluster(epsilon, min_samples, category, filter_metadata=None, unique=False):
+def cluster(epsilon, min_samples, category, filter_metadata=None, novel=False):
     """
     DBScan clustering. Updates memories directly with their cluster id.
     """
     # Mark all memories as unvisited
-    memories = search_memory(category, "", n_results=float("inf"), filter_metadata=filter_metadata, unique=unique)
+    memories = search_memory(category, "", n_results=float("inf"), filter_metadata=filter_metadata, novel=novel)
     visited = {memory["id"]: False for memory in memories}
     
     cluster_id = 0
@@ -16,7 +16,7 @@ def cluster(epsilon, min_samples, category, filter_metadata=None, unique=False):
         visited[memory_id] = True
 
         # Finding neighboring memories based on the epsilon distance threshold
-        neighbors = search_memory(category, memory["document"], n_results=float("inf"), max_distance=epsilon, filter_metadata=filter_metadata, unique=unique)
+        neighbors = search_memory(category, memory["document"], n_results=float("inf"), max_distance=epsilon, filter_metadata=filter_metadata, novel=novel)
 
         # get the current metadata
         metadata = memory.get("metadata", {})
@@ -31,10 +31,10 @@ def cluster(epsilon, min_samples, category, filter_metadata=None, unique=False):
             metadata["cluster"] = str(cluster_id)
             # Mark the current memory as part of the new cluster
             update_memory(category, memory_id, metadata=metadata)
-            _expand_cluster(memory, neighbors, cluster_id, visited, epsilon, min_samples, category, filter_metadata, unique)
+            _expand_cluster(memory, neighbors, cluster_id, visited, epsilon, min_samples, category, filter_metadata, novel)
 
 
-def _expand_cluster(memory, neighbors, cluster_id, visited, epsilon, min_samples, category, filter_metadata, unique):
+def _expand_cluster(memory, neighbors, cluster_id, visited, epsilon, min_samples, category, filter_metadata, novel):
     """
     Helper function to expand the clusters.
     """
@@ -45,7 +45,7 @@ def _expand_cluster(memory, neighbors, cluster_id, visited, epsilon, min_samples
 
         if not visited[neighbor_id]:
             visited[neighbor_id] = True
-            next_neighbors = search_memory(category, neighbor_memory["document"], n_results=float("inf"), max_distance=epsilon, filter_metadata=filter_metadata, unique=unique)
+            next_neighbors = search_memory(category, neighbor_memory["document"], n_results=float("inf"), max_distance=epsilon, filter_metadata=filter_metadata, novel=novel)
             if len(next_neighbors) >= min_samples:
                 neighbors += next_neighbors
 

@@ -1,6 +1,6 @@
 # agentmemory <a href="https://discord.gg/qetWd7J9De"><img style="float: right" src="https://dcbadge.vercel.app/api/server/qetWd7J9De" alt=""></a> <a href="https://github.com/AutonomousResearchGroup/agentmemory/stargazers"><img style="float: right; padding: 5px;" src="https://img.shields.io/github/stars/AutonomousResearchGroup/agentmemory?style=social" alt=""></a>
 
-Easy-to-use agent memory, powered by chromadb
+Easy-to-use memory for agents, document search, knowledge graphing and more.
 
 <img src="resources/image.jpg">
 
@@ -49,6 +49,15 @@ You can enable debugging by passing `debug=True` to most functions, or by settin
 ```python
 create_memory("conversation", "I can't do that, Dave.", debug=True)
 ```
+
+# Deployment
+
+CLIENT_TYPE='POSTGRES' | 'CHROMA'
+POSTGRES_CONNECTION_STRING=postgres://postgres:MagickDatabase123!@db.xnzvmluhwpbngdufsbrd.supabase.co:6543/postgres
+
+By default, agentmemory will use a local ChromaDB instance. If you want to use a Postgres instance, you can set the environment variable `CLIENT_TYPE` to `POSTGRES` and set the `POSTGRES_CONNECTION_STRING` environment variable to your Postgres connection string.
+
+You can deploy an agentmemory-based application to the cloud in minutes using Supabase. Here is a [tutorial](https://supabase.com/blog/openai-embeddings-postgres-vector) and an explanation of [pgvector](https://supabase.com/docs/guides/database/extensions/pgvector).
 
 # Basic Usage Guide
 
@@ -178,7 +187,7 @@ embedding (array): Embedding of the document. Defaults to None. Use if you alrea
 
 #### `create_unique_memory(category, content, metadata={}, similarity=0.95)`
 
-Create a new memory only if there aren't any that are very similar to it. If a similar memory is found, the new memory's "unique" metadata field is set to "False" and it is linked to the existing memory.
+Create a new memory only if there aren't any that are very similar to it. If a similar memory is found, the new memory's "novel" metadata field is set to "False" and it is linked to the existing memory.
 
 ##### Parameters
 
@@ -193,7 +202,7 @@ None
 
 ## Search Memory
 
-#### `search_memory(category, search_text, n_results=5, min_distance=None, max_distance=None, filter_metadata=None, contains_text=None, include_embeddings=True, unique=False)`
+#### `search_memory(category, search_text, n_results=5, min_distance=None, max_distance=None, filter_metadata=None, contains_text=None, include_embeddings=True, novel=False)`
 
 Search a collection with given query texts.
 
@@ -216,7 +225,7 @@ max_distance (float): Only include memories with this distance threshold maximum
     0.1 = most memories will be exluded, 1.0 = no memories will be excluded
 min_distance (float): Only include memories that are at least this distance
     0.0 = No memories will be excluded, 0.9 = most memories will be excluded
-unique (bool): Whether to return only unique memories.
+novel (bool): Whether to return only novel memories.
 ```
 
 ##### Returns
@@ -263,7 +272,7 @@ dict: The retrieved memory.
 
 ## Get Memories
 
-#### `get_memories(category, sort_order="desc", filter_metadata=None, n_results=20, include_embeddings=True, unique=False)`
+#### `get_memories(category, sort_order="desc", filter_metadata=None, n_results=20, include_embeddings=True, novel=False)`
 
 Retrieve a list of memories from a given category, sorted by ID, with optional filtering. `sort_order` controls whether you get from the beginning or end of the list.
 
@@ -278,7 +287,7 @@ sort_order (str): The sorting order of the memories. Can be 'asc' or 'desc'. Def
 filter_metadata (dict): Filter to apply on metadata. Defaults to None.
 n_results (int): The number of results to return. Defaults to 20.
 include_embeddings (bool): Whether to include the embeddings. Defaults to True.
-unique (bool): Whether to return only unique memories. Defaults to False.
+novel (bool): Whether to return only novel memories. Defaults to False.
 ```
 
 ##### Returns
@@ -661,7 +670,7 @@ The `cluster` function in `agentmemory.clustering` provides an implementation of
 ## Function Signature
 
 ```python
-def cluster(epsilon, min_samples, category, filter_metadata=None, unique=False)
+def cluster(epsilon, min_samples, category, filter_metadata=None, novel=False)
 ```
 
 ## Parameters
@@ -670,7 +679,7 @@ def cluster(epsilon, min_samples, category, filter_metadata=None, unique=False)
 - `min_samples` (int): The number of samples (or total weight) in a neighborhood for a point to be considered as a core point.
 - `category` (str): The category of the collection to be clustered.
 - `filter_metadata` (dict, optional): Additional metadata for filtering the memories before clustering. Defaults to None.
-- `unique` (bool, optional): Whether to return only unique memories. Defaults to False.
+- `novel` (bool, optional): Whether to return only novel memories. Defaults to False.
 
 ## Memory Clustering
 
@@ -693,9 +702,9 @@ epsilon = 0.1
 min_samples = 3
 category = "conversation"
 filter_metadata = {"speaker": "HAL"}  # Optional metadata filter
-unique = False  # Whether to return only unique memories
+novel = False  # Whether to return only novel memories
 
-cluster(epsilon, min_samples, category, filter_metadata=filter_metadata, unique=unique)
+cluster(epsilon, min_samples, category, filter_metadata=filter_metadata, novel=novel)
 ```
 
 ## Note
