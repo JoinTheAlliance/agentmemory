@@ -1,20 +1,19 @@
-import os
 from setuptools import setup
 
 long_description = ""
 with open("README.md", "r") as fh:
     long_description = fh.read()
-    # search for any lines that contain <img and remove them
     long_description = long_description.split('\n')
     long_description = [line for line in long_description if not '<img' in line]
-    # now join all the lines back together
     long_description = '\n'.join(long_description)
     
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setup(
     name='agentmemory',
-    version='0.3.4',
-    description='Easy-to-use agent memory, powered by chromadb',
+    version='0.4.0',
+    description='Easy-to-use memory for agents, document search, knowledge graphing and more.',
     long_description=long_description,  # added this line
     long_description_content_type="text/markdown",  # and this line
     url='https://github.com/AutonomousResearchGroup/agentmemory',
@@ -22,7 +21,7 @@ setup(
     author_email='shawmakesmagic@gmail.com',
     license='MIT',
     packages=['agentmemory'],
-    install_requires=['chromadb', 'agentlogger'],
+    install_requires=required,
     readme = "README.md",
     classifiers=[
         'Development Status :: 4 - Beta',

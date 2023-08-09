@@ -1,6 +1,6 @@
 # agentmemory <a href="https://discord.gg/qetWd7J9De"><img style="float: right" src="https://dcbadge.vercel.app/api/server/qetWd7J9De" alt=""></a> <a href="https://github.com/AutonomousResearchGroup/agentmemory/stargazers"><img style="float: right; padding: 5px;" src="https://img.shields.io/github/stars/AutonomousResearchGroup/agentmemory?style=social" alt=""></a>
 
-Easy-to-use agent memory, powered by chromadb
+Easy-to-use memory for agents, document search, knowledge graphing and more.
 
 <img src="resources/image.jpg">
 
@@ -49,6 +49,15 @@ You can enable debugging by passing `debug=True` to most functions, or by settin
 ```python
 create_memory("conversation", "I can't do that, Dave.", debug=True)
 ```
+
+# Deployment
+
+CLIENT_TYPE='POSTGRES' | 'CHROMA'
+POSTGRES_CONNECTION_STRING=postgres://postgres:MagickDatabase123!@db.xnzvmluhwpbngdufsbrd.supabase.co:6543/postgres
+
+By default, agentmemory will use a local ChromaDB instance. If you want to use a Postgres instance, you can set the environment variable `CLIENT_TYPE` to `POSTGRES` and set the `POSTGRES_CONNECTION_STRING` environment variable to your Postgres connection string.
+
+You can deploy an agentmemory-based application to the cloud in minutes using Supabase. Here is a [tutorial](https://supabase.com/blog/openai-embeddings-postgres-vector) and an explanation of [pgvector](https://supabase.com/docs/guides/database/extensions/pgvector).
 
 # Basic Usage Guide
 
