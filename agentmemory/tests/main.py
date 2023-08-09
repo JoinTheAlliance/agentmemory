@@ -1,3 +1,4 @@
+import time
 from agentmemory import (
     search_memory,
     get_memory,
@@ -98,6 +99,25 @@ def test_count_memories():
     wipe_category("test")
 
 
+def test_delete_memories():
+    wipe_category("books")
+    # create a memory to be deleted
+    create_memory("books", "Foundation", metadata={"author": "Isaac Asimov"}, id="1")
+    create_memory("books", "Foundation and Empire", metadata={"author": "Isaac Asimov"}, id="2")
+    create_memory("books", "Second Foundation", metadata={"author": "Isaac Asimov"}, id="3")
+
+    # assert the memory exists
+    assert get_memory("books", "1") is not None
+
+    # delete the memory
+    assert delete_memories("books", "Foundation")
+    assert delete_memories("books", metadata={"author": "Isaac Asimov"})
+
+    # assert the memory does not exist anymore
+    assert get_memory("books", "1") is None
+    wipe_category("books")
+    
+
 def test_memory_search_distance():
     wipe_category("test")
     create_memory("test", "cinammon duck cakes")
@@ -152,22 +172,3 @@ def test_delete_similar_memories():
     memories = get_memories("test")
     assert len(memories) == 1
     wipe_category("test")
-
-
-def test_delete_memories():
-    wipe_category("books")
-    # create a memory to be deleted
-    create_memory("books", "Foundation", metadata={"author": "Isaac Asimov"}, id="1")
-    create_memory("books", "Foundation and Empire", metadata={"author": "Isaac Asimov"}, id="2")
-    create_memory("books", "Second Foundation", metadata={"author": "Isaac Asimov"}, id="3")
-
-    # assert the memory exists
-    assert get_memory("books", "1") is not None
-
-    # delete the memory
-    assert delete_memories("books", "Foundation")
-    assert delete_memories("books", metadata={"author": "Isaac Asimov"})
-
-    # assert the memory does not exist anymore
-    assert get_memory("books", "1") is None
-    wipe_category("books")

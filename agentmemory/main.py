@@ -212,10 +212,13 @@ def get_memory(category, id, include_embeddings=True):
     # Get the types to include based on the function parameters
     include_types = get_include_types(include_embeddings, False)
 
+    memory2 = memories.get(limit=1, include=include_types)
+    print("***** memory no ids returned:")
+    print(memory2)
     # Retrieve the memory with the given ID
-    memory = memories.get(ids=[str(id)], limit=1, include=include_types)
-
-
+    memory = memories.get(ids=[id], limit=1, include=include_types)
+    print("***** memory returned:")
+    print(memory)
     memory = chroma_collection_to_list(memory)
 
     debug_log(f"Got memory {id} from category {category}", memory)
@@ -295,7 +298,7 @@ def get_memories(
         # Convert the collection to list format
         memories = chroma_collection_to_list(memories)
 
-    print('memories')
+    print("memories")
     print(memories)
 
     # Sort memories by ID. If sort_order is 'desc', then the reverse parameter will be True, and memories will be sorted in descending order.
@@ -349,7 +352,9 @@ def update_memory(category, id, text=None, metadata=None, embedding=None):
     embeddings = [embedding] if embedding is not None else None
 
     # Update the memory with the new text and/or metadata
-    memories.update(ids=[str(id)], documents=documents, metadatas=metadatas, embeddings=embeddings)
+    memories.update(
+        ids=[str(id)], documents=documents, metadatas=metadatas, embeddings=embeddings
+    )
 
     debug_log(
         f"Updated memory {id} in category {category}",
@@ -539,6 +544,7 @@ def wipe_category(category):
     if collection is not None:
         # Delete the entire category
         get_client().delete_collection(category)
+
 
 def wipe_all_memories():
     """
