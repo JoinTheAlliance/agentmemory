@@ -7,8 +7,13 @@ with open("README.md", "r") as fh:
     long_description = [line for line in long_description if not '<img' in line]
     long_description = '\n'.join(long_description)
     
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
+install_requires = [
+    "chromadb",
+    "agentlogger",
+    "psycopg2-binary",
+    "sentence_transformers",
+    "python-dotenv"
+]
 
 setup(
     name='agentmemory',
@@ -21,7 +26,7 @@ setup(
     author_email='shawmakesmagic@gmail.com',
     license='MIT',
     packages=['agentmemory'],
-    install_requires=required,
+    install_requires=install_requires,
     readme = "README.md",
     classifiers=[
         'Development Status :: 4 - Beta',
