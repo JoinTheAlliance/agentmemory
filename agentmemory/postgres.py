@@ -1,5 +1,8 @@
 import json
+from pathlib import Path
 import psycopg2
+
+from agentmemory.check_model import check_model, infer_embeddings
 
 
 class PostgresCollection:
@@ -148,18 +151,17 @@ class PostgresCategory:
     def __init__(self, name):
         self.name = name
 
+default_model_path = str(Path.home() / ".cache" / "onnx_models")
 
 class PostgresClient:
-    def __init__(self, connection_string):
+    def __init__(self, connection_string, model_name = "all-MiniLM-L6-v2", model_path = default_model_path):
         self.connection = psycopg2.connect(connection_string)
         self.cur = self.connection.cursor()
         from pgvector.psycopg2 import register_vector
-
+        
         register_vector(self.cur)  # Register PGVector functions
-
-        from sentence_transformers import SentenceTransformer
-
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+        full_model_path = check_model(model_name=model_name, model_path=model_path)
+        self.model_path = full_model_path
 
     def _table_name(self, category):
         return f"memory_{category}"
@@ -241,7 +243,8 @@ class PostgresClient:
         return self.cur.fetchone()[0]
 
     def create_embedding(self, document):
-        return self.model.encode(document, normalize_embeddings=True)
+        embeddings = infer_embeddings([document], model_path=self.model_path)
+        return embeddings[0]
 
     def add(self, category, documents, metadatas, ids):
         self.ensure_table_exists(category)

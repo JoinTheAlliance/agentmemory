@@ -42,6 +42,8 @@ from .clustering import (
     cluster,
 )
 
+from .check_model import check_model, infer_embeddings
+
 __all__ = [
     "create_memory",
     "create_unique_memory",
@@ -70,4 +72,6 @@ __all__ = [
     "reset_epoch",
     "set_epoch",
     "cluster",
+    "check_model",
+    "infer_embeddings"
 ]

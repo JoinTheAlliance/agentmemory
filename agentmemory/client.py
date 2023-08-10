@@ -1,9 +1,5 @@
 import os
-import json
-
 import chromadb
-import psycopg2
-from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 
 from agentmemory.postgres import PostgresClient
