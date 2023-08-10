@@ -1,6 +1,5 @@
 import json
 import psycopg2
-from sentence_transformers import SentenceTransformer
 
 
 class PostgresCollection:
@@ -157,7 +156,10 @@ class PostgresClient:
         from pgvector.psycopg2 import register_vector
 
         register_vector(self.cur)  # Register PGVector functions
-        self.model = SentenceTransformer("BAAI/bge-large-en")
+
+        from sentence_transformers import SentenceTransformer
+
+        self.model = SentenceTransformer("all-MiniLM-L6-v2")
 
     def _table_name(self, category):
         return f"memory_{category}"
@@ -264,7 +266,7 @@ class PostgresClient:
             "documents": [],
             "metadatas": [],
             "embeddings": [],
-            "distances": []
+            "distances": [],
         }
         self.ensure_table_exists(category)
         table_name = self._table_name(category)
@@ -287,7 +289,6 @@ class PostgresClient:
                     results["embeddings"].append(row[3])
                     results["distances"].append(row[4])
         return results
-
 
     def update(self, category, id_, document=None, metadata=None, embedding=None):
         self.ensure_table_exists(category)
