@@ -172,7 +172,7 @@ class PostgresClient:
                 id SERIAL PRIMARY KEY,
                 document TEXT NOT NULL,
                 metadata JSONB,
-                embedding VECTOR(1024)
+                embedding VECTOR(384)
             )
         """
         )
