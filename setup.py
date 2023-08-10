@@ -17,7 +17,7 @@ install_requires = [
 
 setup(
     name='agentmemory',
-    version='0.4.0',
+    version='0.4.1',
     description='Easy-to-use memory for agents, document search, knowledge graphing and more.',
     long_description=long_description,  # added this line
     long_description_content_type="text/markdown",  # and this line
