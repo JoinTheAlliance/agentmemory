@@ -35,7 +35,7 @@ def increment_epoch():
     epoch = get_epoch()
     epoch = epoch + 1
     create_memory("epoch", str(epoch))
-    return epoch
+    return int(epoch)
 
 
 def get_epoch():

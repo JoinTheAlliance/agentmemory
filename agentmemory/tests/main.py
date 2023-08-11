@@ -53,8 +53,17 @@ def test_memory_update():
     memories = get_memories("test")
     memory_id = memories[0]["id"]
 
+    update_memory("test", memory_id, "doc 1 updated no", metadata={"test": "test"})
     update_memory("test", memory_id, "doc 1 updated", metadata={"test": "test"})
+
     assert get_memory("test", memory_id)["document"] == "doc 1 updated"
+
+    create_memory("test", "new memory test", metadata={"test": "test"})
+    memories = get_memories("test")
+    memory_id = memories[0]["id"]
+    update_memory("test", memory_id, "doc 2 updated", metadata={"test": "test"})
+    assert get_memory("test", memory_id)["document"] == "doc 2 updated"
+
     wipe_category("test")
 
 

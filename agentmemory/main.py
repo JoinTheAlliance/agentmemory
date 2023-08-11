@@ -336,6 +336,8 @@ def update_memory(category, id, text=None, metadata=None, embedding=None):
             if isinstance(value, bool):
                 debug_log(f"WARNING: Boolean metadata field {key} converted to string")
                 metadata[key] = str(value)
+    else:
+        metadata = {}
 
     metadata["updated_at"] = datetime.datetime.now().timestamp()
 
