@@ -1,4 +1,7 @@
 import datetime
+import os
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from agentmemory.helpers import (
     chroma_collection_to_list,
@@ -9,7 +12,6 @@ from agentmemory.helpers import (
 
 
 from agentmemory.client import get_client
-
 
 def create_memory(category, text, metadata={}, embedding=None, id=None):
     """
@@ -344,8 +346,6 @@ def update_memory(category, id, text=None, metadata=None, embedding=None):
     documents = [text] if text is not None else None
     metadatas = [metadata] if metadata is not None else None
     embeddings = [embedding] if embedding is not None else None
-    print('********************** UPDATE')
-    print(id, documents, metadatas, embeddings)
     # Update the memory with the new text and/or metadata
     memories.update(
         ids=[str(id)], documents=documents, metadatas=metadatas, embeddings=embeddings

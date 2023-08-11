@@ -34,7 +34,6 @@ def test_create_event():
     event = get_events()[0]
     assert event["document"] == "test event"
     assert event["metadata"]["test"] == "test"
-    print(event["metadata"])
     assert int(event["metadata"]["epoch"]) == 1
     wipe_category("events")
     wipe_category("epoch")
