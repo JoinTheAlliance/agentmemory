@@ -11,6 +11,7 @@ def cluster(epsilon, min_samples, category, filter_metadata=None, novel=False):
     cluster_id = 0
     for memory in memories:
         memory_id = memory["id"]
+        print("Memory ID: ", memory_id)
         if visited[memory_id]:
             continue
         visited[memory_id] = True

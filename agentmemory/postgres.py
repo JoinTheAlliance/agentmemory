@@ -101,9 +101,14 @@ class PostgresCollection:
         return self.client.query(self.category, query_texts, n_results)
 
     def update(self, ids, documents=None, metadatas=None, embeddings=None):
+        self.client.ensure_table_exists(self.category)
         # if embeddings is not None
         if embeddings is None:
+            if documents is None:
+                documents = [None] * len(ids)
             for id_, document, metadata in zip(ids, documents, metadatas):
+                print("updating")
+                print(id_, document, metadata)
                 self.client.update(self.category, id_, document, metadata)
         else:
             for id_, document, metadata, emb in zip(
