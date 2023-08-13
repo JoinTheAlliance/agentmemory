@@ -46,7 +46,7 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
     # for each field in metadata...
     # if the field is a boolean, convert it to a string
     for key, value in metadata.items():
-        if isinstance(value, bool):
+        if isinstance(value, bool) or isinstance(value, dict) or isinstance(value, list):
             debug_log(f"WARNING: Boolean metadata field {key} converted to string")
             metadata[key] = str(value)
 
@@ -335,7 +335,7 @@ def update_memory(category, id, text=None, metadata=None, embedding=None):
     if metadata is not None:
         # for each key value in metadata -- if the type is boolean, convert it to string
         for key, value in metadata.items():
-            if isinstance(value, bool):
+            if isinstance(value, bool) or isinstance(value, dict) or isinstance(value, list):
                 debug_log(f"WARNING: Boolean metadata field {key} converted to string")
                 metadata[key] = str(value)
     else:
