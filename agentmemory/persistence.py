@@ -56,6 +56,9 @@ def export_memory_to_file(path="./memory.json", include_embeddings=True):
     # Export the database to a dictionary
     collections_dict = export_memory_to_json(include_embeddings)
 
+    print('collections_dict')
+    print(collections_dict)
+
     # Write the dictionary to a JSON file
     with open(path, "w") as outfile:
         json.dump(collections_dict, outfile)

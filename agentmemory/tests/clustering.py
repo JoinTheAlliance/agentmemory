@@ -38,6 +38,8 @@ def test_cluster_no_neighbors():
 
     memories_data = get_memories("numbers")
 
+    assert memories_data[0]['embedding'] is not None
+
     # All memories should be marked as noise since they have no neighbors
     for memory in memories_data:
         assert memory["metadata"].get("cluster") == "noise"
@@ -62,13 +64,10 @@ def test_cluster_insufficient_neighbors():
 
     memories_data = get_memories("fruits")
 
-    # Print metadata for debugging
-    for memory in memories_data:
-        print(f"Memory Document: {memory['document']}, Metadata: {memory['metadata']}")
-
     # Only 'banana' should be marked as noise since 'apple' has 2 neighbors but needs 3
     for memory in memories_data:
         assert memory["metadata"].get("cluster") == "noise"
+        
     wipe_category("fruits")
 
 

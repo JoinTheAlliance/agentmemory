@@ -86,6 +86,8 @@ class PostgresCollection:
         where_document=None,
         include=["metadatas", "documents"],
     ):
+        # TODO: Mirrors Chroma API, but could be optimized a lot
+        
         category = self.category
         table_name = self.client._table_name(category)
         conditions = []
@@ -152,11 +154,27 @@ class PostgresCollection:
             item["metadata"] = metadata
             result.append(item)
 
-        return {
+        output = {
             "ids": [row["id"] for row in result],
             "documents": [row["document"] for row in result],
             "metadatas": [row["metadata"] for row in result],
         }
+
+        if len(result) == 0 or include is None:
+            return output
+
+        # embeddings is an array, check if include includes "embeddings"
+        if 'embeddings' in include and result[0].get("embedding", None) is not None:
+            output["embeddings"] = [row["embedding"] for row in result]
+            # transform from ndarray to list
+            output["embeddings"] = [emb.tolist() for emb in output["embeddings"]]
+
+        if 'distances' in include and result[0].get("distance", None) is not None:
+            output["distances"] = [row["distances"] for row in result]
+            # transform to list
+            output["distances"] = [dist.tolist() for dist in output["distances"]]
+
+        return output
 
     def peek(self, limit=10):
         return self.get(limit=limit)
