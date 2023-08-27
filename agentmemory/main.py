@@ -1,5 +1,6 @@
 import datetime
 import os
+import uuid
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -11,6 +12,8 @@ from agentmemory.helpers import (
 )
 
 from agentmemory.client import get_client
+
+
 
 def create_memory(category, text, metadata={}, embedding=None, id=None):
     """
@@ -29,7 +32,7 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
     Example:
     >>> create_memory('sample_category', 'sample_text', id='sample_id', metadata={'sample_key': 'sample_value'})
     """
-  
+
     # Get or create the collection
     memories = get_client().get_or_create_collection(category)
 
@@ -43,8 +46,12 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
             debug_log(f"WARNING: Non-string metadata field {key} converted to string")
             metadata[key] = str(value)
 
+    # If id is None, generate a UUID
+    if id is None:
+        id = str(uuid.uuid4())
+
     # Prepare a list for the IDs
-    ids = [id] if id is not None else []
+    ids = [id]
 
     # Insert the document into the collection
     memories.add(
@@ -53,12 +60,15 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
         metadatas=[metadata],
         embeddings=[embedding] if embedding is not None else None
     )
-    
-    # Here, we assume that `add` method appends the newly generated ID to the `ids` list.
-    memory_id = ids[0]
+
+    # Retrieve the ID of the newly created memory
+    memory_id = ids[0] if ids else None
+
+    if memory_id is None:
+        debug_log("Failed to create memory. No ID returned.", type="error")
+        return None
 
     debug_log(f"Created memory {memory_id}: {text}", metadata)
-
     return memory_id  # This will now be a UUID or the ID you provided
 
 
