@@ -16,27 +16,21 @@ from agentmemory.main import create_unique_memory, delete_similar_memories
 
 def test_memory_creation_and_retrieval():
     wipe_category("test")
-    
-    # Create 20 memories
+    # create 10 memories
     for i in range(20):
         create_memory(
-            "test", f"document {i}", metadata={"test": "test", "test2": "test2"}
+            "test", "document " + str(i), metadata={"test": "test", "test2": "test2"}
         )
 
-    # Retrieve 10 memories with filtering
     memories = get_memories(
         "test", filter_metadata={"test": "test", "test2": "test2"}, n_results=10
     )
 
-    # Assert length of memories is 10
+    # assert length of memories is 10
     assert len(memories) == 10
 
-    # Create a list of all the documents in the retrieved memories
-    retrieved_documents = [memory['document'] for memory in memories]
-
-    # Assert that the document "document 19" is in the retrieved documents
-    assert "document 19" in retrieved_documents
-
+    # assert that the first memory is document 19
+    assert memories[0]["document"] == "document 19"
     wipe_category("test")
 
 
@@ -174,32 +168,21 @@ def test_delete_similar_memories():
 
 def test_create_unique_memory():
     wipe_category("test")
-    
     # Test creating a novel memory
     create_unique_memory("test", "unique_memory_1", similarity=0.1)
     memories = get_memories("test")
     assert len(memories) == 1
-    
-    # Instead of relying on the order, filter the memories based on their content
-    novel_memories = [mem for mem in memories if mem['metadata']['novel'] == "True"]
-    assert len(novel_memories) == 1
+    assert memories[0]["metadata"]["novel"] == "True"
 
     # Test creating a non-novel memory similar to the existing one
     create_unique_memory("test", "unique_memory_1", similarity=0.1)
     memories = get_memories("test")
     assert len(memories) == 2
-    
-    # Filter non-novel memories
-    non_novel_memories = [mem for mem in memories if mem['metadata']['novel'] == "False"]
-    assert len(non_novel_memories) == 1
+    assert memories[0]["metadata"]["novel"] == "False"
 
     # Test creating a non-novel memory similar to the existing one
     create_unique_memory("test", "common_object_a", similarity=0.9)
     memories = get_memories("test")
     assert len(memories) == 3
-    
-    # Re-filter for novel memories
-    novel_memories = [mem for mem in memories if mem['metadata']['novel'] == "True"]
-    assert len(novel_memories) == 2
-    
+    assert memories[0]["metadata"]["novel"] == "True"
     wipe_category("test")

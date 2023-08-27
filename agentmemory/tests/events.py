@@ -42,23 +42,9 @@ def test_create_event():
 def test_get_events():
     wipe_category("events")
     reset_epoch()
-
-    # Create 5 events
     for i in range(5):
-        create_event(f"test event {i + 1}")
-
-    # Assert that 5 events are present
+        create_event("test event " + str(i + 1))
     assert len(get_events()) == 5
-
-    # Fetch 1 event (or however your function's argument works)
-    events = get_events(1)
-
-    # Create a list of all the documents in the retrieved events
-    retrieved_events = [event['document'] for event in events]
-
-    # Assert that the document "test event 5" is in the retrieved events
-    assert "test event 5" in retrieved_events
-
-    # Clean up
+    assert get_events(1)[0]["document"] == "test event 5"
     wipe_category("events")
     wipe_category("epoch")
