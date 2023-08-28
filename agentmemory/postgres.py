@@ -1,5 +1,6 @@
 from pathlib import Path
 import psycopg2
+import uuid
 
 from agentmemory.check_model import check_model, infer_embeddings
 
@@ -69,13 +70,13 @@ class PostgresCollection:
 
     def add(self, ids, documents=None, metadatas=None, embeddings=None):
         if embeddings is None:
-            for id_, document, metadata in zip(ids, documents, metadatas):
-                self.client.insert_memory(self.category, document, metadata)
+            for document, metadata in zip(documents, metadatas):
+                generated_id = self.client.insert_memory(self.category, document, metadata)
+                ids.append(generated_id)  # appending the returned id to ids list
         else:
-            for id_, document, metadata, emb in zip(
-                ids, documents, metadatas, embeddings
-            ):
-                self.client.insert_memory(self.category, document, metadata, emb)
+            for document, metadata, emb in zip(documents, metadatas, embeddings):
+                generated_id = self.client.insert_memory(self.category, document, metadata, emb)
+                ids.append(generated_id)  # appending the returned id to ids list
 
     def get(
         self,
@@ -118,13 +119,10 @@ class PostgresCollection:
             self.client._ensure_metadata_columns_exist(category, parse_metadata(where))
 
         if ids:
-            if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
-                raise Exception(
-                    "ids must be a list of integers or strings representing integers"
-                )
-            ids = [int(i) for i in ids]
-            conditions.append("id=ANY(%s)")
-            params.append(ids)
+                # Type casting to uuid
+                conditions.append("id=ANY(%s::uuid[])")
+                params.append([str(id_) for id_ in ids])
+
 
         if limit is None:
             limit = 100  # or another default value
@@ -221,13 +219,14 @@ class PostgresCollection:
             params.append(f"%{where_document}%")
 
         if ids:
-            if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
-                raise Exception(
-                    "ids must be a list of integers or strings representing integers"
-                )
-            ids = [int(i) for i in ids]
-            conditions.append("id=ANY(%s::int[])")  # Added explicit type casting
-            params.append(ids)
+            # Validate UUIDs
+            try:
+                ids = [uuid.UUID(str(i)) for i in ids]
+            except ValueError:
+                raise Exception("ids must be a list of valid UUIDs or strings that can be converted to UUIDs")
+
+            conditions.append("id=ANY(%s::uuid[])")  # Use uuid[] for PostgreSQL UUID array type
+            params.append([str(id_) for id_ in ids])
 
         if where:
             for key, value in where.items():
@@ -262,7 +261,6 @@ class PostgresCategory:
 
 default_model_path = str(Path.home() / ".cache" / "onnx_models")
 
-
 class PostgresClient:
     def __init__(
         self,
@@ -286,11 +284,12 @@ class PostgresClient:
         self.cur.execute(
             f"""
             CREATE TABLE IF NOT EXISTS {table_name} (
-                id SERIAL PRIMARY KEY,
+                id uuid DEFAULT uuid_generate_v4(),
                 document TEXT NOT NULL,
-                embedding VECTOR(384)
+                embedding VECTOR(384),
+                PRIMARY KEY (id)
             )
-        """
+            """
         )
         self.connection.commit()
 
@@ -343,14 +342,9 @@ class PostgresClient:
         if embedding is None:
             embedding = self.create_embedding(document)
 
-        # if the id is None, get the length of the table by counting the number of rows in the category
-        if id is None:
-            id = self.get_or_create_collection(category).count()
-
-        # Extracting the keys and values from metadata to insert them into respective columns
-        columns = ["id", "document", "embedding"] + list(metadata.keys())
+        columns = ["document", "embedding"] + list(metadata.keys())
         placeholders = ["%s"] * len(columns)
-        values = [id, document, embedding] + list(metadata.values())
+        values = [document, embedding] + list(metadata.values())
 
         query = f"""
         INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})
@@ -358,7 +352,7 @@ class PostgresClient:
         """
         self.cur.execute(query, tuple(values))
         self.connection.commit()
-        return self.cur.fetchone()[0]
+        return self.cur.fetchone()[0]  # This will fetch the generated UUID
 
     def create_embedding(self, document):
         embeddings = infer_embeddings([document], model_path=self.model_path)

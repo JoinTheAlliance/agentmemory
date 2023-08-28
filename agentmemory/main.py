@@ -10,7 +10,6 @@ from agentmemory.helpers import (
     get_include_types,
 )
 
-
 from agentmemory.client import get_client
 
 def create_memory(category, text, metadata={}, embedding=None, id=None):
@@ -18,48 +17,49 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
     Create a new memory in a collection.
 
     Arguments:
-    category (str): Category of the collection.
-    text (str): Document text.
-    id (str): Unique id.
-    metadata (dict): Metadata.
+    - category (str): Category of the collection.
+    - text (str): Document text.
+    - metadata (dict): Metadata.
+    - embedding: Embedding vector, if available.
+    - id (str or None): Unique ID for the memory. If None, a UUID will be generated.
 
     Returns:
-    None
+    - The generated UUID or the provided ID.
 
     Example:
     >>> create_memory('sample_category', 'sample_text', id='sample_id', metadata={'sample_key': 'sample_value'})
     """
-
-    # get or create the collection
+  
+    # Get or create the collection
     memories = get_client().get_or_create_collection(category)
 
-    # add timestamps to metadata
+    # Add timestamps to metadata
     metadata["created_at"] = datetime.datetime.now().timestamp()
     metadata["updated_at"] = datetime.datetime.now().timestamp()
 
-    # if no id is provided, generate one based on count of documents in collection
-    if id is None:
-        id = str(memories.count())
-        # pad the id with zeros to make it 16 digits long
-        id = id.zfill(16)
-
-    # for each field in metadata...
-    # if the field is a boolean, convert it to a string
+    # For each field in metadata, if the field is a boolean, convert it to a string
     for key, value in metadata.items():
         if isinstance(value, bool) or isinstance(value, dict) or isinstance(value, list):
-            debug_log(f"WARNING: Boolean metadata field {key} converted to string")
+            debug_log(f"WARNING: Non-string metadata field {key} converted to string")
             metadata[key] = str(value)
 
-    # insert the document into the collection
-    memories.upsert(
-        ids=[str(id)],
+    # Prepare a list for the IDs
+    ids = [id] if id is not None else []
+
+    # Insert the document into the collection
+    memories.add(
+        ids=ids,
         documents=[text],
         metadatas=[metadata],
-        embeddings=[embedding] if embedding is not None else None,
+        embeddings=[embedding] if embedding is not None else None
     )
+    
+    # Here, we assume that `add` method appends the newly generated ID to the `ids` list.
+    memory_id = ids[0]
 
-    debug_log(f"Created memory {id}: {text}", metadata)
-    return id
+    debug_log(f"Created memory {memory_id}: {text}", metadata)
+
+    return memory_id  # This will now be a UUID or the ID you provided
 
 
 def create_unique_memory(category, content, metadata={}, similarity=0.95):
@@ -203,10 +203,10 @@ def get_memory(category, id, include_embeddings=True):
 
     Returns:
         dict: The retrieved memory.
-
-    Example:
-        >>> get_memory("books", "1")
     """
+
+    # No need to check UUID here as PostgreSQL will handle the type casting
+    debug_log(f"Getting memory with ID: {id}, Type: {type(id)}")
 
     # Get or create the collection for the given category
     memories = get_client().get_or_create_collection(category)
