@@ -1,6 +1,9 @@
 from pathlib import Path
+import os
+
 import psycopg2
 
+from .client import AgentMemory, CollectionMemory
 from agentmemory.check_model import check_model, infer_embeddings
 
 
@@ -53,7 +56,7 @@ def get_sql_operator(operator):
         raise ValueError(f"Operator {operator} not supported")
 
 
-class PostgresCollection:
+class PostgresCollection(CollectionMemory):
     def __init__(self, category, client):
         self.category = category
         self.client = client
@@ -87,7 +90,7 @@ class PostgresCollection:
         include=["metadatas", "documents"],
     ):
         # TODO: Mirrors Chroma API, but could be optimized a lot
-        
+
         category = self.category
         table_name = self.client._table_name(category)
         conditions = []
@@ -263,7 +266,7 @@ class PostgresCategory:
 default_model_path = str(Path.home() / ".cache" / "onnx_models")
 
 
-class PostgresClient:
+class PostgresClient(AgentMemory):
     def __init__(
         self,
         connection_string,
@@ -300,10 +303,10 @@ class PostgresClient:
             self.cur.execute(
                 """
                 SELECT EXISTS (
-                    SELECT 1 
-                    FROM pg_catalog.pg_attribute 
-                    WHERE attrelid = %s::regclass 
-                    AND attname = %s 
+                    SELECT 1
+                    FROM pg_catalog.pg_attribute
+                    WHERE attrelid = %s::regclass
+                    AND attname = %s
                     AND NOT attisdropped
                 )
             """,
@@ -496,3 +499,15 @@ class PostgresClient:
     def close(self):
         self.cur.close()
         self.connection.close()
+
+
+def create_client(self):
+    postgres_connection_string = os.environ.get("POSTGRES_CONNECTION_STRING")
+    model_name = os.environ.get("POSTGRES_MODEL_NAME", "all-MiniLM-L6-v2")
+    embedding_width = os.environ.get("EMBEDDING_WIDTH", 384)
+    if postgres_connection_string is None:
+        raise EnvironmentError(
+            "Postgres connection string not set in environment variables!"
+        )
+    return PostgresClient(postgres_connection_string, model_name=model_name, embedding_width=embedding_width)
+

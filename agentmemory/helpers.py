@@ -1,9 +1,7 @@
 import json
 import os
-import dotenv
 from agentlogger import log
 
-dotenv.load_dotenv()
 
 DEBUG = os.getenv("DEBUG", "false") == "true" or os.getenv("DEBUG", "false") == "True"
 
@@ -63,7 +61,7 @@ def chroma_collection_to_list(collection):
     # check if collection is a list
     if isinstance(collection, list):
         return collection
-    
+
     # If there are no embeddings, zip metadatas, documents and ids together
     if collection.get("embeddings", None) is None:
         for metadata, document, id in zip(
