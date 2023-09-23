@@ -58,6 +58,42 @@ def get_sql_operator(operator):
     else:
         raise ValueError(f"Operator {operator} not supported")
 
+def parse_conditions(where=None, where_document=None, ids=None):
+    conditions = []
+    params = []
+    if where_document is not None:
+        if where_document.get("$contains", None) is not None:
+            where_document = where_document["$contains"]
+        conditions.append("document LIKE %s")
+        params.append(f"%{where_document}%")
+
+    if where:
+        for key, value in where.items():
+            if key == "$and":
+                new_conditions, new_params = handle_and_condition(value)
+                conditions.extend(new_conditions)
+                params.extend(new_params)
+            elif key == "$or":
+                or_condition, new_params = handle_or_condition(value)
+                conditions.append(or_condition)
+                params.extend(new_params)
+            elif key == "$contains":
+                conditions.append(f"document LIKE %s")
+                params.append(f"%{value}%")
+            else:
+                conditions.append(f"{key}=%s")
+                params.append(str(value))
+
+    if ids:
+        if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
+            raise Exception(
+                "ids must be a list of integers or strings representing integers"
+            )
+        ids = [int(i) for i in ids]
+        conditions.append("id=ANY(%s::int[])")  # Added explicit type casting
+        params.append(ids)
+
+    return conditions, params
 
 class PostgresCollection(CollectionMemory):
     def __init__(self, category, client: PostgresClient, metadata=None):
@@ -104,40 +140,8 @@ class PostgresCollection(CollectionMemory):
         # TODO: Mirrors Chroma API, but could be optimized a lot
         category = self.category
         table_name = self.client._table_name(category)
-        conditions = []
-        params = []
-        if where_document is not None:
-            if where_document.get("$contains", None) is not None:
-                where_document = where_document["$contains"]
-            conditions.append("document LIKE %s")
-            params.append(f"%{where_document}%")
-
-        if where:
-            for key, value in where.items():
-                if key == "$and":
-                    new_conditions, new_params = handle_and_condition(value)
-                    conditions.extend(new_conditions)
-                    params.extend(new_params)
-                elif key == "$or":
-                    or_condition, new_params = handle_or_condition(value)
-                    conditions.append(or_condition)
-                    params.extend(new_params)
-                elif key == "$contains":
-                    conditions.append(f"document LIKE %s")
-                    params.append(f"%{value}%")
-                else:
-                    conditions.append(f"{key}=%s")
-                    params.append(str(value))
-            self._validate_metadata(parse_metadata(where))
-
-        if ids:
-            if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
-                raise Exception(
-                    "ids must be a list of integers or strings representing integers"
-                )
-            ids = [int(i) for i in ids]
-            conditions.append("id=ANY(%s)")
-            params.append(ids)
+        self._validate_metadata(parse_metadata(where))
+        conditions, params = parse_conditions(where, where_document, ids)
 
         if limit is None:
             limit = 100  # or another default value
@@ -223,40 +227,7 @@ class PostgresCollection(CollectionMemory):
 
     def delete(self, ids=None, where=None, where_document=None):
         table_name = self.client._table_name(self.category)
-        conditions = []
-        params = []
-
-        if where_document is not None:
-            if where_document.get("$contains", None) is not None:
-                where_document = where_document["$contains"]
-            conditions.append("document LIKE %s")
-            params.append(f"%{where_document}%")
-
-        if ids:
-            if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
-                raise Exception(
-                    "ids must be a list of integers or strings representing integers"
-                )
-            ids = [int(i) for i in ids]
-            conditions.append("id=ANY(%s::int[])")  # Added explicit type casting
-            params.append(ids)
-
-        if where:
-            for key, value in where.items():
-                if key == "$and":
-                    new_conditions, new_params = handle_and_condition(value)
-                    conditions.extend(new_conditions)
-                    params.extend(new_params)
-                elif key == "$or":
-                    or_condition, new_params = handle_or_condition(value)
-                    conditions.append(or_condition)
-                    params.extend(new_params)
-                elif key == "$contains":
-                    conditions.append(f"document LIKE %s")
-                    params.append(f"%{value}%")
-                else:
-                    conditions.append(f"{key}=%s")
-                    params.append(str(value))
+        conditions, params = parse_conditions(where, where_document, ids)
 
         if conditions:
             query = f"DELETE FROM {table_name} WHERE " + " AND ".join(conditions)
@@ -408,32 +379,8 @@ class PostgresClient(AgentMemory):
     ):
         collection = self.get_or_create_collection(category, parse_metadata(where))
         table_name = self._table_name(category)
-        conditions = []
-        params = []
-
-        # Check if where_document is given
-        if where_document:
-            if where_document.get("$contains", None) is not None:
-                where_document = where_document["$contains"]
-            conditions.append("document LIKE %s")
-            params.append(f"%{where_document}%")
-
-        if where:
-            for key, value in where.items():
-                if key == "$and":
-                    new_conditions, new_params = handle_and_condition(value)
-                    conditions.extend(new_conditions)
-                    params.extend(new_params)
-                elif key == "$or":
-                    or_condition, new_params = handle_or_condition(value)
-                    conditions.append(or_condition)
-                    params.extend(new_params)
-                elif key == "$contains":
-                    conditions.append(f"document LIKE %s")
-                    params.append(f"%{value}%")
-                else:
-                    conditions.append(f"{key}=%s")
-                    params.append(str(value))
+        collection._validate_metadata(parse_metadata(where))
+        conditions, params = parse_conditions(where, where_document)
 
         where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
