@@ -37,12 +37,6 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
     metadata["created_at"] = datetime.datetime.now().timestamp()
     metadata["updated_at"] = datetime.datetime.now().timestamp()
 
-    # if no id is provided, generate one based on count of documents in collection
-    if id is None:
-        id = str(memories.count())
-        # pad the id with zeros to make it 16 digits long
-        id = id.zfill(16)
-
     # for each field in metadata...
     # if the field is a boolean, convert it to a string
     for key, value in metadata.items():
@@ -52,7 +46,7 @@ def create_memory(category, text, metadata={}, embedding=None, id=None):
 
     # insert the document into the collection
     memories.upsert(
-        ids=[str(id)],
+        ids=[id],
         documents=[text],
         metadatas=[metadata],
         embeddings=[embedding] if embedding is not None else None,

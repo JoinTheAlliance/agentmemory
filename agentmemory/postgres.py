@@ -1,13 +1,17 @@
+from __future__ import annotations
 from pathlib import Path
 import os
+from functools import reduce
+from itertools import repeat
 
 import psycopg2
 
 from .client import AgentMemory, CollectionMemory, AgentCollection
-from agentmemory.check_model import check_model, infer_embeddings
-
+from .check_model import check_model, infer_embeddings
+import agentlogger
 
 def parse_metadata(where):
+    where = where or {}
     metadata = {}
     for key, value in where.items():
         if key[0] != "$":
@@ -55,14 +59,59 @@ def get_sql_operator(operator):
     else:
         raise ValueError(f"Operator {operator} not supported")
 
+def parse_conditions(where=None, where_document=None, ids=None):
+    conditions = []
+    params = []
+    if where_document is not None:
+        if where_document.get("$contains", None) is not None:
+            where_document = where_document["$contains"]
+        conditions.append("document LIKE %s")
+        params.append(f"%{where_document}%")
+
+    if where:
+        for key, value in where.items():
+            if key == "$and":
+                new_conditions, new_params = handle_and_condition(value)
+                conditions.extend(new_conditions)
+                params.extend(new_params)
+            elif key == "$or":
+                or_condition, new_params = handle_or_condition(value)
+                conditions.append(or_condition)
+                params.extend(new_params)
+            elif key == "$contains":
+                conditions.append(f"document LIKE %s")
+                params.append(f"%{value}%")
+            else:
+                conditions.append(f"{key}=%s")
+                params.append(str(value))
+
+    if ids:
+        if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
+            raise Exception(
+                "ids must be a list of integers or strings representing integers"
+            )
+        ids = [int(i) for i in ids]
+        conditions.append("id=ANY(%s::int[])")  # Added explicit type casting
+        params.append(ids)
+
+    return conditions, params
 
 class PostgresCollection(CollectionMemory):
-    def __init__(self, category, client):
+    def __init__(self, category, client: PostgresClient, metadata=None):
         self.category = category
         self.client = client
+        self.metadata = metadata or {}
+        client.ensure_table_exists(category)
+        if metadata:
+            client._ensure_metadata_columns_exist(category, metadata)
+
+    def _validate_metadata(self, metadata):
+        if new_columns := set(metadata) - set(self.metadata):
+            agentlogger.log(f"Undeclared metadata {', '.join(new_columns)} for collection {self.category}")
+            self.client._ensure_metadata_columns_exist(self.category, metadata)
+            self.metadata.update(metadata)
 
     def count(self):
-        self.client.ensure_table_exists(self.category)
         table_name = self.client._table_name(self.category)
 
         query = f"SELECT COUNT(*) FROM {table_name}"
@@ -70,15 +119,14 @@ class PostgresCollection(CollectionMemory):
 
         return self.client.cur.fetchone()[0]
 
-    def add(self, ids, documents=None, metadatas=None, embeddings=None):
-        if embeddings is None:
-            for id_, document, metadata in zip(ids, documents, metadatas):
-                self.client.insert_memory(self.category, document, metadata)
-        else:
-            for id_, document, metadata, emb in zip(
-                ids, documents, metadatas, embeddings
-            ):
-                self.client.insert_memory(self.category, document, metadata, emb)
+    def add(self, ids=None, documents=None, metadatas=None, embeddings=None):
+        # dropping ids, using database serial
+        embeddings = embeddings or repeat(None)
+        metadatas = metadatas or repeat({})
+        for document, metadata, emb in zip(
+            documents, metadatas, embeddings
+        ):
+            self.client.insert_memory(self.category, document, metadata, emb)
 
     def get(
         self,
@@ -90,44 +138,10 @@ class PostgresCollection(CollectionMemory):
         include=["metadatas", "documents"],
     ):
         # TODO: Mirrors Chroma API, but could be optimized a lot
-
         category = self.category
         table_name = self.client._table_name(category)
-        conditions = []
-        params = []
-        if where_document is not None:
-            if where_document.get("$contains", None) is not None:
-                where_document = where_document["$contains"]
-            conditions.append("document LIKE %s")
-            params.append(f"%{where_document}%")
-
-        if where:
-            for key, value in where.items():
-                if key == "$and":
-                    new_conditions, new_params = handle_and_condition(value)
-                    conditions.extend(new_conditions)
-                    params.extend(new_params)
-                elif key == "$or":
-                    or_condition, new_params = handle_or_condition(value)
-                    conditions.append(or_condition)
-                    params.extend(new_params)
-                elif key == "$contains":
-                    conditions.append(f"document LIKE %s")
-                    params.append(f"%{value}%")
-                else:
-                    conditions.append(f"{key}=%s")
-                    params.append(str(value))
-
-            self.client._ensure_metadata_columns_exist(category, parse_metadata(where))
-
-        if ids:
-            if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
-                raise Exception(
-                    "ids must be a list of integers or strings representing integers"
-                )
-            ids = [int(i) for i in ids]
-            conditions.append("id=ANY(%s)")
-            params.append(ids)
+        self._validate_metadata(parse_metadata(where))
+        conditions, params = parse_conditions(where, where_document, ids)
 
         if limit is None:
             limit = 100  # or another default value
@@ -196,7 +210,6 @@ class PostgresCollection(CollectionMemory):
         )
 
     def update(self, ids, documents=None, metadatas=None, embeddings=None):
-        self.client.ensure_table_exists(self.category)
         # if embeddings is not None
         if embeddings is None:
             if documents is None:
@@ -214,40 +227,7 @@ class PostgresCollection(CollectionMemory):
 
     def delete(self, ids=None, where=None, where_document=None):
         table_name = self.client._table_name(self.category)
-        conditions = []
-        params = []
-
-        if where_document is not None:
-            if where_document.get("$contains", None) is not None:
-                where_document = where_document["$contains"]
-            conditions.append("document LIKE %s")
-            params.append(f"%{where_document}%")
-
-        if ids:
-            if not all(isinstance(i, str) or isinstance(i, int) for i in ids):
-                raise Exception(
-                    "ids must be a list of integers or strings representing integers"
-                )
-            ids = [int(i) for i in ids]
-            conditions.append("id=ANY(%s::int[])")  # Added explicit type casting
-            params.append(ids)
-
-        if where:
-            for key, value in where.items():
-                if key == "$and":
-                    new_conditions, new_params = handle_and_condition(value)
-                    conditions.extend(new_conditions)
-                    params.extend(new_params)
-                elif key == "$or":
-                    or_condition, new_params = handle_or_condition(value)
-                    conditions.append(or_condition)
-                    params.extend(new_params)
-                elif key == "$contains":
-                    conditions.append(f"document LIKE %s")
-                    params.append(f"%{value}%")
-                else:
-                    conditions.append(f"{key}=%s")
-                    params.append(str(value))
+        conditions, params = parse_conditions(where, where_document, ids)
 
         if conditions:
             query = f"DELETE FROM {table_name} WHERE " + " AND ".join(conditions)
@@ -277,6 +257,7 @@ class PostgresClient(AgentMemory):
         full_model_path = check_model(model_name=model_name, model_path=model_path)
         self.model_path = full_model_path
         self.embedding_width = embedding_width
+        self.collections = {}
 
     def _table_name(self, category):
         return f"memory_{category}"
@@ -324,33 +305,40 @@ class PostgresClient(AgentMemory):
             if row[0].startswith("memory_")
         ]
 
-    def get_collection(self, category):
-        return PostgresCollection(category, self)
+    def get_collection(self, category, metadata=None):
+        if collection := self.collections.get(category):
+            if metadata:
+                collection._validate_metadata(metadata)
+        else:
+            # Should we check for table existence here?
+            collection = PostgresCollection(category, self, metadata)
+        return collection
 
     def delete_collection(self, category):
         table_name = self._table_name(category)
         self.cur.execute(f"DROP TABLE IF EXISTS {table_name}")
         self.connection.commit()
+        self.collections.pop(category, None)
 
-    def get_or_create_collection(self, category):
-        return PostgresCollection(category, self)
+    def get_or_create_collection(self, category, metadata=None):
+        if collection := self.collections.get(category):
+            if metadata:
+                collection._validate_metadata(metadata)
+        else:
+            collection = PostgresCollection(category, self, metadata)
+        return collection
 
     def insert_memory(self, category, document, metadata={}, embedding=None, id=None):
-        self.ensure_table_exists(category)
-        self._ensure_metadata_columns_exist(category, parse_metadata(metadata))
+        collection = self.get_or_create_collection(category, metadata)
         table_name = self._table_name(category)
 
         if embedding is None:
             embedding = self.create_embedding(document)
 
-        # if the id is None, get the length of the table by counting the number of rows in the category
-        if id is None:
-            id = self.get_or_create_collection(category).count()
-
         # Extracting the keys and values from metadata to insert them into respective columns
-        columns = ["id", "document", "embedding"] + list(metadata.keys())
+        columns = ["document", "embedding"] + list(metadata.keys())
         placeholders = ["%s"] * len(columns)
-        values = [id, document, embedding] + list(metadata.values())
+        values = [document, embedding] + list(metadata.values())
 
         query = f"""
         INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})
@@ -365,12 +353,12 @@ class PostgresClient(AgentMemory):
         return embeddings[0]
 
     def add(self, category, documents, metadatas, ids):
-        self.ensure_table_exists(category)
+        metadatas = list(metadatas)  # in case it's a consumable iterable
+        meta_keys = reduce(set.union, (set(parse_metadata(m)) for m in metadatas), set())
+        collection = self.get_or_create_collection(category, meta_keys)
         table_name = self._table_name(category)
         with self.connection.cursor() as cur:
             for document, metadata, id_ in zip(documents, metadatas, ids):
-                self._ensure_metadata_columns_exist(category, parse_metadata(metadata))
-
                 columns = ["id", "document", "embedding"] + list(metadata.keys())
                 placeholders = ["%s"] * len(columns)
                 embedding = self.create_embedding(document)
@@ -385,34 +373,10 @@ class PostgresClient(AgentMemory):
     def query(
         self, category, query_texts, n_results=5, where=None, where_document=None
     ):
-        self.ensure_table_exists(category)
+        collection = self.get_or_create_collection(category, parse_metadata(where))
         table_name = self._table_name(category)
-        conditions = []
-        params = []
-
-        # Check if where_document is given
-        if where_document:
-            if where_document.get("$contains", None) is not None:
-                where_document = where_document["$contains"]
-            conditions.append("document LIKE %s")
-            params.append(f"%{where_document}%")
-
-        if where:
-            for key, value in where.items():
-                if key == "$and":
-                    new_conditions, new_params = handle_and_condition(value)
-                    conditions.extend(new_conditions)
-                    params.extend(new_params)
-                elif key == "$or":
-                    or_condition, new_params = handle_or_condition(value)
-                    conditions.append(or_condition)
-                    params.extend(new_params)
-                elif key == "$contains":
-                    conditions.append(f"document LIKE %s")
-                    params.append(f"%{value}%")
-                else:
-                    conditions.append(f"{key}=%s")
-                    params.append(str(value))
+        collection._validate_metadata(parse_metadata(where))
+        conditions, params = parse_conditions(where, where_document)
 
         where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
@@ -457,16 +421,13 @@ class PostgresClient(AgentMemory):
         return results
 
     def update(self, category, id_, document=None, metadata=None, embedding=None):
-        self.ensure_table_exists(category)
+        collection = self.get_or_create_collection(category, parse_metadata(metadata))
         table_name = self._table_name(category)
         with self.connection.cursor() as cur:
             if document:
                 if embedding is None:
                     embedding = self.create_embedding(document)
                 if metadata:
-                    self._ensure_metadata_columns_exist(
-                        category, parse_metadata(metadata)
-                    )
                     columns = ["document=%s", "embedding=%s"] + [
                         f"{key}=%s" for key in metadata.keys()
                     ]
@@ -482,7 +443,7 @@ class PostgresClient(AgentMemory):
                 """
                 cur.execute(query, tuple(values) + (id_,))
             elif metadata:
-                self._ensure_metadata_columns_exist(category, parse_metadata(metadata))
+                collection._validate_metadata(metadata)
                 columns = [f"{key}=%s" for key in metadata.keys()]
                 values = list(metadata.values())
                 query = f"""
