@@ -2,6 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 import os
 from functools import reduce
+from itertools import repeat
 
 import psycopg2
 
@@ -118,15 +119,14 @@ class PostgresCollection(CollectionMemory):
 
         return self.client.cur.fetchone()[0]
 
-    def add(self, ids, documents=None, metadatas=None, embeddings=None):
-        if embeddings is None:
-            for id_, document, metadata in zip(ids, documents, metadatas):
-                self.client.insert_memory(self.category, document, metadata)
-        else:
-            for id_, document, metadata, emb in zip(
-                ids, documents, metadatas, embeddings
-            ):
-                self.client.insert_memory(self.category, document, metadata, emb)
+    def add(self, ids=None, documents=None, metadatas=None, embeddings=None):
+        # dropping ids, using database serial
+        embeddings = embeddings or repeat(None)
+        metadatas = metadatas or repeat({})
+        for document, metadata, emb in zip(
+            documents, metadatas, embeddings
+        ):
+            self.client.insert_memory(self.category, document, metadata, emb)
 
     def get(
         self,
@@ -335,14 +335,10 @@ class PostgresClient(AgentMemory):
         if embedding is None:
             embedding = self.create_embedding(document)
 
-        # if the id is None, get the length of the table by counting the number of rows in the category
-        if id is None:
-            id = collection.count()
-
         # Extracting the keys and values from metadata to insert them into respective columns
-        columns = ["id", "document", "embedding"] + list(metadata.keys())
+        columns = ["document", "embedding"] + list(metadata.keys())
         placeholders = ["%s"] * len(columns)
-        values = [id, document, embedding] + list(metadata.values())
+        values = [document, embedding] + list(metadata.values())
 
         query = f"""
         INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(placeholders)})

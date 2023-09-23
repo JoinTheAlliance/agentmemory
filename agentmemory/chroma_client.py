@@ -43,6 +43,12 @@ class ChromaCollectionMemory(CollectionMemory):
         return self.collection.update(ids, embeddings, metadatas, documents)
 
     def upsert(self, ids, documents=None, metadatas=None, embeddings=None):
+        # if no id is provided, generate one based on count of documents in collection
+        if any(id is None for id in ids):
+            origin = self.count()
+            # pad the id with zeros to make it 16 digits long
+            ids = [str(id_).zfill(16) for id_ in range(origin, origin+len(documents))]
+
         return self.collection.upsert(ids, embeddings, metadatas, documents)
 
     def delete(self, ids=None, where=None, where_document=None):
