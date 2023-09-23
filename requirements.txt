@@ -1,5 +1,6 @@
 chromadb
 agentlogger
+pluggy
 psycopg2-binary
 python-dotenv
 onnxruntime<1.15

@@ -1,6 +1,9 @@
 from pathlib import Path
+import os
+
 import psycopg2
 
+from .client import AgentMemory, CollectionMemory, AgentCollection
 from agentmemory.check_model import check_model, infer_embeddings
 
 
@@ -53,7 +56,7 @@ def get_sql_operator(operator):
         raise ValueError(f"Operator {operator} not supported")
 
 
-class PostgresCollection:
+class PostgresCollection(CollectionMemory):
     def __init__(self, category, client):
         self.category = category
         self.client = client
@@ -87,7 +90,7 @@ class PostgresCollection:
         include=["metadatas", "documents"],
     ):
         # TODO: Mirrors Chroma API, but could be optimized a lot
-        
+
         category = self.category
         table_name = self.client._table_name(category)
         conditions = []
@@ -255,20 +258,16 @@ class PostgresCollection:
         self.client.connection.commit()
 
 
-class PostgresCategory:
-    def __init__(self, name):
-        self.name = name
-
-
 default_model_path = str(Path.home() / ".cache" / "onnx_models")
 
 
-class PostgresClient:
+class PostgresClient(AgentMemory):
     def __init__(
         self,
         connection_string,
         model_name="all-MiniLM-L6-v2",
         model_path=default_model_path,
+        embedding_width=384,
     ):
         self.connection = psycopg2.connect(connection_string)
         self.cur = self.connection.cursor()
@@ -277,6 +276,7 @@ class PostgresClient:
         register_vector(self.cur)  # Register PGVector functions
         full_model_path = check_model(model_name=model_name, model_path=model_path)
         self.model_path = full_model_path
+        self.embedding_width = embedding_width
 
     def _table_name(self, category):
         return f"memory_{category}"
@@ -288,7 +288,7 @@ class PostgresClient:
             CREATE TABLE IF NOT EXISTS {table_name} (
                 id SERIAL PRIMARY KEY,
                 document TEXT NOT NULL,
-                embedding VECTOR(384)
+                embedding VECTOR({self.embedding_width})
             )
         """
         )
@@ -300,10 +300,10 @@ class PostgresClient:
             self.cur.execute(
                 """
                 SELECT EXISTS (
-                    SELECT 1 
-                    FROM pg_catalog.pg_attribute 
-                    WHERE attrelid = %s::regclass 
-                    AND attname = %s 
+                    SELECT 1
+                    FROM pg_catalog.pg_attribute
+                    WHERE attrelid = %s::regclass
+                    AND attname = %s
                     AND NOT attisdropped
                 )
             """,
@@ -319,7 +319,7 @@ class PostgresClient:
             "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
         )
         return [
-            PostgresCategory(row[0].split("_")[1])
+            AgentCollection(name=row[0].split("_")[1])
             for row in self.cur.fetchall()
             if row[0].startswith("memory_")
         ]
@@ -496,3 +496,15 @@ class PostgresClient:
     def close(self):
         self.cur.close()
         self.connection.close()
+
+
+def create_client():
+    postgres_connection_string = os.environ.get("POSTGRES_CONNECTION_STRING")
+    model_name = os.environ.get("POSTGRES_MODEL_NAME", "all-MiniLM-L6-v2")
+    embedding_width = os.environ.get("EMBEDDING_WIDTH", 384)
+    if postgres_connection_string is None:
+        raise EnvironmentError(
+            "Postgres connection string not set in environment variables!"
+        )
+    return PostgresClient(postgres_connection_string, model_name=model_name, embedding_width=embedding_width)
+

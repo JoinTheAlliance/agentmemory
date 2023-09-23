@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+
 from .main import (
     create_memory,
     create_unique_memory,
@@ -36,6 +38,7 @@ from .persistence import (
 
 from .client import (
     get_client,
+    hookimpl,
 )
 
 from .clustering import (
@@ -43,6 +46,8 @@ from .clustering import (
 )
 
 from .check_model import check_model, infer_embeddings
+
+load_dotenv()
 
 __all__ = [
     "create_memory",
@@ -64,6 +69,7 @@ __all__ = [
     "import_json_to_memory",
     "import_file_to_memory",
     "get_client",
+    "hookimpl",
     "get_persistent_directory",
     "create_event",
     "get_epoch",
@@ -73,5 +79,5 @@ __all__ = [
     "set_epoch",
     "cluster",
     "check_model",
-    "infer_embeddings"
+    "infer_embeddings",
 ]
