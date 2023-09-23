@@ -105,7 +105,7 @@ class AgentCollection():
 
 class AgentMemory(ABC):
     @abstractmethod
-    def get_or_create_collection(self, category) -> CollectionMemory:
+    def get_or_create_collection(self, category, metadata=None) -> CollectionMemory:
         raise NotImplementedError()
 
     @abstractmethod
